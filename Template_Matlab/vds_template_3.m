@@ -38,7 +38,7 @@ hostName = 'localhost:801'; % IP address of the computer running Vicon Tracker
 lightWeightMode = false;
 
 % Instance the interface
-vdsi = VDSInterface(hostName, lightWeightMode);
+vdsi = VDSInterface(hostName, lightWeightMode).Connect;
 [~, frameInfo] = vdsi.GetFrame;
 frameRate = frameInfo.frameRate;
 
@@ -51,8 +51,8 @@ for idx = 1 : length(frameNumber)
     points = [points; pointsAll.GetByName(myObjectNames)];
 end
 
-% Offset framenumber to start at 1
-% Find corrosponding frame times
+% Offset frameNumber to start at 1
+% Find corresponding frame times
 frameNumber = frameNumber - frameNumber(1) + 1;
 frameTime = (frameNumber-1)/frameRate;
 

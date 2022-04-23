@@ -1,6 +1,6 @@
 %{
 Written By: Brandon Johns
-Date Version Created: 2022-04-14
+Date Version Created: 2022-04-21
 Date Last Edited: 2022-04-21
 Status: functional
 Dependencies:
@@ -10,7 +10,7 @@ Dependencies:
 %%% PURPOSE %%%
 Example for using Brandon's interface to the "Vicon DataStream SDK"
 
-Print locations of objects to the screen
+Demonstrate use of all functions
 
 %%% TODO %%%
 
@@ -27,21 +27,43 @@ lightWeightMode = false;
 
 % Instance the interface
 vdsi = VDSInterface(hostName, lightWeightMode);
+vdsi.Connect;
 
-% Collect data
-while true
-    % Get next data frame
-    points = vdsi.GetFrame;
+% Get next data frame
+[points, frameInfo] = vdsi.GetFrame;
 
-    %********************************************************************************************************
-    % Do something with the output data
-    %   Brandon's interface makes it easy to work with the data!
-    %****************************************************
-    % Operate on a subset of the points
-    jackle = points.GetByName("Jackle");
-    predestrian = points.GetByName("Pedestrian");
-    fprintf("%s:[%8.1f, %8.1f, %8.1f]\t", jackle.Name, jackle.x, jackle.y, jackle.z);
-    fprintf("%s:[%8.1f, %8.1f, %8.1f]\t", predestrian.Name, predestrian.x, predestrian.y, predestrian.z);
-    fprintf("\n");
-end
+frameRate = frameInfo.frameRate %     [Hz]
+frameNumber = frameInfo.frameNumber % [Count]
+latency = frameInfo.latency %         [Seconds]
+
+% Get info about specific objects (Use the names of the objects as specified in Vicon Tracker)
+myObjects = points.GetByName(["Jackle", "Pedestrian"]);
+
+% Optionally filter out occluded points
+%myObjects = myObjects.GetIfNotOccluded;
+
+% Name of object, as defined in Vicon Tracker
+name = myObjects.Name
+
+% Is the object occluded in this frame?
+IsOccluded = myObjects.IsOccluded
+
+% Translation [mm] (x, y, z, position vector, homogeneous position vector)
+x = myObjects.x
+y = myObjects.y
+z = myObjects.z
+P = myObjects.P
+Ph = myObjects.Ph
+
+% Rotation (matrix, quaternions, axis angle, euler)
+R = myObjects.R{:}
+quat = myObjects.quat
+axang = myObjects.axang
+euler = myObjects.euler
+
+% Transformation matrix [position in mm]
+T = myObjects.T{:}
+
+
+
 

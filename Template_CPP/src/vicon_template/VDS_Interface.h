@@ -1,7 +1,7 @@
 /*
 Written by:			Brandon Johns
 Version created:	2021-11-04
-Last edited:		2021-12-13
+Last edited:		2022-04-22
 
 Version changes:
 	NA
@@ -11,19 +11,8 @@ Purpose:
 	Manages the returned data
 
 Class Summary:
-	(ABSTRACT) VDS_Interface
-	(ABSTRACT) VDS_DirectClient_Interface
-	VDS_ServerPush_Interface
-	VDS_ClientPull_Interface
-	VDS_ClientPullPreFetch_Interface
-	VDS_Retimer_Interface
-		Interfaces to the Vicon DataStream SDK Retiming Client
-		Returns data as objects of type 'Point'
-		Choice of interface changes the behaviour for UpdateFrame() method
-			VDS_ServerPush_Interface         = low latency, blocking
-			VDS_ClientPull_Interface         = low bandwidth, bocking
-			VDS_ClientPullPreFetch_Interface = med bandwidth, not bocking - returns last received frame
-			VDS_Retimer_Interface            = low latency, not blocking - returns forward predicted frame (but loss of accuracy)
+	VDS_Interface
+		Wrapper for the Vicon DataStream SDK
 
 	Point
 		Stores the position and rotation of vicon objects
@@ -44,105 +33,76 @@ namespace vds = ViconDataStreamSDK::CPP;
 
 namespace vdsi
 {
-	// Forward Declaration required for typedef
-	class Point;
-	typedef std::shared_ptr<vdsi::Point> point_ptr;
-
-
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// Stores the position and rotaion of vicon objects
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// I suggest editing this to use the Armadillo C++ Maths library,
-	// but to keep it simple for the template, I use std::array
+	// but to keep it simple for the template, I use std::vector
 	class Point
 	{
 	public:
 		// Object name, as appears in Vicon Tracker (VDS calls this the "SubjectName")
-		std::string viconObjectName;
-
 		// Global Transformation - Rotation matrix, stored in row major order
-		std::array<double,9> R_rowMajor;
-
 		// Global Transformation - Position vector
-		std::array<double,3> P;
-
-		// This is set if the object was occluded
+		// Set if the object was occluded
+		std::string viconObjectName;
+		std::vector<double> R_rowMajor;
+		std::vector<double> P;
 		bool IsOccluded;
 
 		//********************************************************************************
 		// Interface: Create
 		//****************************************
 		// INPUT: (see variable defs)
-		Point(std::string name_in, std::array<double,9> R_in, std::array<double,3> P_in, bool occluded_in)
+		Point(
+			std::string name_in,
+			std::vector<double> R_in = std::vector<double>(9, nan("")),
+			std::vector<double> P_in = std::vector<double>(3, nan("")),
+			bool occluded_in = true
+		) :
+			viconObjectName(name_in),
+			R_rowMajor(R_in),
+			P(P_in),
+			IsOccluded(occluded_in)
 		{
-			// Save all the input
-			this->viconObjectName = name_in;
-			this->R_rowMajor = R_in;
-			this->P = P_in;
-			this->IsOccluded = occluded_in;
+			// Validate input
+			if(this->R_rowMajor.size() != 9) { throw std::runtime_error("ERROR_VDS: R_rowMajor is wrong size"); }
+			if(this->R_P.size() != 3)        { throw std::runtime_error("ERROR_VDS: P is wrong size"); }
 		}
 
 		//********************************************************************************
 		// Interface: Get
 		//****************************************
-		// OUTPUT: Matrices encoded as a std::vector
-		std::vector<double> R_rowMajor_vec() { return std::vector<double>(this->R_rowMajor.begin(), this->R_rowMajor.end()); }
-		std::vector<double> P_vec() { return std::vector<double>(this->P.begin(), this->P.end()); }
-
-		// OUTPUT: the element of the rotation matrix, R(col,row)
-		//	Counting starts at 1, because I said so! => valid range=[1:3]
-		double R_at(uint8_t col, uint8_t row)
-		{
-			// Input validation
-			if(1>row||row>3 || 1>col||col>3) {throw "BJ_ERROR: Out of bounds";}
-
-			return this->R_rowMajor.at(3*(col-1) + (row-1));
-		}
-
 		// OUTPUT: x,y,z coordinates
 		double x() { return this->P.at(0); }
 		double y() { return this->P.at(1); }
 		double z() { return this->P.at(2); }
 
-		// OUTPUT: position as a string (x,y,z)
-		std::string P_str()
+		// OUTPUT: the element of the rotation matrix, R(col,row)
+		//	Counting starts at 1, because I said so! => valid range=[1:3]
+		double R_at(uint8_t col, uint8_t row)
 		{
-			return
-				std::to_string(this->x()) + ", "
-				+ std::to_string(this->y()) + ", "
-				+ std::to_string(this->z());
-		}
-		// OUTPUT: rotation matrix as a string (in row major format)
-		std::string R_str_rowMajor()
-		{
-			return
-				std::to_string(this->R_rowMajor.at(0)) + ", "
-				+ std::to_string(this->R_rowMajor.at(1)) + ", "
-				+ std::to_string(this->R_rowMajor.at(2)) + ", "
-				+ std::to_string(this->R_rowMajor.at(3)) + ", "
-				+ std::to_string(this->R_rowMajor.at(4)) + ", "
-				+ std::to_string(this->R_rowMajor.at(5)) + ", "
-				+ std::to_string(this->R_rowMajor.at(6)) + ", "
-				+ std::to_string(this->R_rowMajor.at(7)) + ", "
-				+ std::to_string(this->R_rowMajor.at(8));
+			// Validate input
+			if(1>row||row>3 || 1>col||col>3) {throw  std::runtime_error("ERROR_VDS: Out of bounds");}
+
+			return this->R_rowMajor.at(3*(col-1) + (row-1));
 		}
 	};
 
-	
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// Manages points of the Point class - storage, retrieval by name
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	class Points
 	{
 	public:
-		// Vector of pointers to the Point object
-		std::vector< vdsi::point_ptr > all;
+		// Vector of Point objects
+		std::vector<vdsi::Point> all;
 
 		//********************************************************************************
 		// Interface: Set
 		//****************************************
 		// INPUT: shared_prt to Point
-		void AddPoint(point_ptr point)
+		void AddPoint(vdsi::Point point)
 		{
 			// Save point
 			this->all.push_back(point);
@@ -152,61 +112,53 @@ namespace vdsi
 		// Interface: Get
 		//****************************************
 		// INPUT: Point name
-		// OUTPUT: Pointer to the found point or a nullptr if not found
-		vdsi::point_ptr Get(std::string name)
+		// OUTPUT: Copy of the found point
+		vdsi::Point Get(std::string name)
 		{
-			// Search for point by name
-			for(auto point : this->all)
+			uint64_t position = 0;
+			for(auto& point : this->all)
 			{
-				if (point->viconObjectName == name)
-				{
-					return point;
-				}
+				// Return upon finding point
+				if (point.viconObjectName == name) { return vdsi::Points::Result_Find(position); }
+				position++;
 			}
 
-			// no point found => return nullptr
-			return nullptr;
-		}
-
-		// Print all points
-		// INPUT: pointer to stream to print to
-		//		To Terminal: out = &std::cout;
-		//		To File:     out = new std::ofstream("out.txt");
-		void Print(std::ostream& out)
-		{
-			out << "----------------------" << std::endl;
-			for(auto point : this->all)
-			{
-				if(!point->IsOccluded)
-				{
-					out << point->viconObjectName << std::endl;
-					out << "Global Position: " << point->P_str() << std::endl;
-					out << "Global Translation: " << point->R_str_rowMajor() << std::endl;
-				}
-			}
+			// No point found => return occluded
+			return BJ::CE_Point(name);
 		}
 	};
 
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// (ABSTRACT) Interface to VDS
+	// Interface to VDS
 	//	Trust me, it's better than the raw interface
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	template<class vds_Client>
 	class VDS_Interface
 	{
 	private:
-		// Switch filters on or off
-		bool IsObjectFilterActive = false;
-		bool IsOccludedFilterActive = false;
+		vds::Client Client;
 
-		// Vector of vicon object names that are allowed by our filter
+		// User settings: Filter enables and list
+		std::atomic<bool> IsObjectFilterActive = false;
+		std::atomic<bool> IsOccludedFilterActive = false;
 		std::vector<std::string> filter_AllowedObjects;
 
+		// Internal state control
+		std::unique_ptr<std::thread> UpdateThread;
+		std::atomic<bool> IsConnected = false;
+		std::atomic<bool> IsKillReqest = false;
+		std::atomic<bool> IsFrameReady = false;
+		vdsi::Points LatestFrame;
+		std::mutex mtx_LatestFrame;
+
 	public:
-		vds_Client Client;
+		//********************************************************************************
+		// Interface: Constructor / Destructor
+		//****************************************
+		VDS_Interface() { }
+		~VDS_Interface() { this->Disconnect(); }
 
 		//********************************************************************************
-		// Interface: Start / Stop
+		// Interface: Connect / Disconnect
 		//****************************************
 		// PURPOSE:
 		//	Call this first to connect to VDS and initialise the client
@@ -215,40 +167,33 @@ namespace vdsi
 		//	Flag_Lightweight:
 		//		0 = Normal mode
 		//		1 = Lightweight mode (Sacrifice precision to reduce the network bandwidth by ~75%)
-		void Initialise(std::string HostName, bool Flag_Lightweight)
+		void Connect(std::string HostName = "localhost:801", bool EnableLightweight = false)
 		{
-			// Make client and connect to server
-			if (this->Client.Connect(HostName).Result != vds::Result::Success)
+			if(this->IsConnected) { return; } // Nothing to do
+
+			// Connect to server
+			if(this->Client.Connect(HostName).Result != vds::Result::Success)
 			{
-				throw std::runtime_error("BJ_ERROR: (VDS) Could not connect to " + HostName);
+				throw std::runtime_error("ERROR_VDS: Failed to connect to " + HostName);
 			}
 
 			// Apply options
-			if (Flag_Lightweight)
-			{
-				std::cout << "BJ_INFO: (VDS) Using lightweight segment data" << std::endl;
-				if( this->Client.EnableLightweightSegmentData().Result != vds::Result::Success )
-				{
-					std::cout << "BJ_WARNING: (VDS) Lightweight segment data did not enable. Continuing in normal mode" << std::endl;
-				}
-			}
+			bool lightweightResult = EnableLightweight ? this->Client.EnableLightweightSegmentData().Result != vds::Result::Success : true;
+			bool streamModeResult = this->Client.SetStreamMode( vds::StreamMode::ServerPush ) == vds::Result::Success;
+			bool segmentDataResult = this->Client.EnableSegmentData() == vds::Result::Success;
+			bool wasSuccessful =
+				   lightweightResult
+				&& streamModeResult
+				&& segmentDataResult;
+			if( !wasSuccessful ) { throw std::runtime_error("ERROR_VDS: Failed to initialise"); }
 
-			// Client specific setings
-			if(! Initialise_Specifics() )
-			{
-				std::cout << "BJ_WARNING: (VDS) Client did not properly initialise" << std::endl;
-			}
+			// Start thread to listen for data
+			this->IsKillReqest = false;
+			this->IsReady = false;
+			this->UpdateThread = std::make_unique<std::thread>( [this] { this->UpdateFrameInBackground(); });
 
-			// Mostly for the retimer interface, but a good check for the others
-			//	Wait for the VDS retimer buffer to fill (requirement for it to produce output)
-			std::cout << "BJ_INFO: (VDS) Filling buffer - Requres the cameras to see some objects" << std::endl;
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			while( ! this->UpdateFrame_NoWarn() )
-			{
-				// No specific reason for this time length
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
-			}
-			std::cout << "BJ_INFO: (VDS) Ready to capture data" << std::endl;
+			std::cout << "INFO_VDS: Ready to capture data" << std::endl;
+			this->IsConnected = true;
 		}
 
 		// PURPOSE:
@@ -257,7 +202,14 @@ namespace vdsi
 		//	Use to free up processing recources
 		void Disconnect()
 		{
+			if( ! this->IsConnected) { return; } // Nothing to do
+
+			// Set kill flag and wait for thread to finish it's last loop
+			this->IsKillReqest = true;
+			this->UpdateThread->join();
+
 			this->Client.Disconnect();
+			this->IsConnected = false;
 		}
 
 		//********************************************************************************
@@ -275,37 +227,87 @@ namespace vdsi
 		}
 
 		// PUTPOSE: Show all captured objects in the output
-		void DisableObjectFilter() { this->IsObjectFilterActive = false; }
-
 		// PUTPOSE: Do not show occluded objects in the output
-		void EnableOccludedFilter() { this->IsOccludedFilterActive = true; }
-
 		// PUTPOSE: Show all captured objects in the output
+		void DisableObjectFilter()   { this->IsObjectFilterActive = false; }
+		void EnableOccludedFilter()  { this->IsOccludedFilterActive = true; }
 		void DisableOccludedFilter() { this->IsOccludedFilterActive = false; }
 
 		//********************************************************************************
 		// Interface: Control during operation
 		//****************************************
 		// PURPOSE:
-		//	Get next data frame from VDS (frame as in snapshot of system state at current time)
-		// INFO:
-		//	See specifics under UpdataFrame_NoWarn()
-		void UpdateFrame()
+		//	Same as GetFrame() but blocks until the next frame arrives
+		vdsi::Points GetFrame_WaitForNew()
 		{
-			auto UpdateResult = this->UpdateFrame_NoWarn();
-			if (! UpdateResult )
+			this->IsReady = false;
+			return this->GetFrame();
+		}
+
+		// PURPOSE:
+		//	Same as GetFrame() but
+		//		If the latest frame has not yet been read, return the cached frame
+		//		Otherwise, block until the next unread frame arrives
+		vdsi::Points GetFrame_GetUnread()
+		{
+			// TODO
+			//this->IsReady = false;
+			return this->GetFrame();
+		}
+
+		// PURPOSE:
+		//	Get next data frame
+		// OUTPUT: Points object holding the captured data.
+		vdsi::Points GetFrame()
+		{
+			if( ! this->IsConnected )
 			{
-				// This should only happen if the client is disconnected
-				std::cout << "BJ_WARNING: (VDS) Frame update failed for this frame" << std::endl;
+				std::cout << "WARNING_VDS: Not Connected" << std::endl;
+				return vdsi::Points();
+			}
+
+			// Block until thread signals ready
+			while( ! this->IsReady ) { std::this_thread::sleep_for(std::chrono::microseconds(1)); }
+
+			// This statement is written very specifically to invoke the copy contructor of vdsi::Points
+			// See syntax differences to call copy constructor VS operator=
+			this->mtx_LatestFrame.lock();
+			auto LatestFrame_copy = this->LatestFrame;
+			this->mtx_LatestFrame.unlock();
+
+			return LatestFrame_copy;
+		}
+
+	private:
+		//************************************************************
+		// Frame update thread
+		//******************************
+		// Runs in background to update the frame data
+		void UpdateFrameInBackground()
+		{
+			while( ! this->IsKillReqest )
+			{
+				// Wait for next frame
+				auto UpdateResult = Client.GetFrame();
+
+				// Create object holding frame data
+				BJ::CE_Points LatestFrame_internal = this->DecodeFrame();
+
+				// Replace public reference to the previous frame with the new frame
+				this->mtx_LatestFrame.lock();
+				this->LatestFrame = LatestFrame_internal;
+				this->mtx_LatestFrame.unlock();
+
+				// (Only first loop) Unblock GetFrame()
+				this->IsReady = true;
 			}
 		}
 
 		// PURPOSE:
-		//	Decode the data frame that was captured when UpdateFrame was last called
-		//	Filtering is applied here
-		// OUTPUT: Points object holding the captured data.
-		vdsi::Points FrameToPoints()
-		{
+		//	Get next data frame from VDS (frame as in snapshot of system state at current time)
+		//	Decode the data frame
+		//	Apply filtering
+		vdsi::Points DecodeFrame()
 			// Object to return
 			vdsi::Points Points;
 
@@ -321,7 +323,7 @@ namespace vdsi
 				{
 					// If this happens, then you get to rewrite this interface to also loop over and store Segment data
 					// Refer to the example that comes with the Vicon DataStream SDK "ViconDataStreamSDK_CPPRetimerTest.cpp"
-					throw std::runtime_error("BJ_ERROR: (VDS) Invalid assumption that segment count is 1");
+					throw std::runtime_error("ERROR_VDS: Invalid assumption that segment count is 1");
 				}
 
 				// Segment name
@@ -395,18 +397,6 @@ namespace vdsi
 			return Points;
 		}
 
-	private:
-		//********************************************************************************
-		// Virtual functions
-		//****************************************
-		// Client specific setings
-		// OUTPUT: true = success, false = error
-		virtual bool Initialise_Specifics() = 0;
-
-		// UpdateFrame, but returns warning as an output instead of printing the warning
-		// OUTPUT: true = success, false = error
-		virtual bool UpdateFrame_NoWarn() = 0;
-
 		//********************************************************************************
 		// Helper functions
 		//****************************************
@@ -436,144 +426,7 @@ namespace vdsi
 					}
 				}
 			}
-
 			return PassesObjectFilter;
 		}
-
 	};
-
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// (ABSTRACT) Interface to VDS
-	//	Direct Client
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	class VDS_DirectClient_Interface : public VDS_Interface<vds::Client>
-	{
-	private:
-		//********************************************************************************
-		// Virtual functions
-		//****************************************
-		// Client specific setings
-		// OUTPUT: true = success, false = error
-		virtual bool Initialise_Specifics_SteamMode() = 0;
-
-		//********************************************************************************
-		// Instance virtual functions from superclass
-		//****************************************
-		bool Initialise_Specifics()
-		{
-			bool streamModeResult_Result = Initialise_Specifics_SteamMode();
-
-			// For the Direct Client, data types need to be explicitly enabled
-			vds::Output_EnableSegmentData segmentDataResult = this->Client.EnableSegmentData();
-
-			bool WasSuccessful =
-				   streamModeResult_Result
-				&& segmentDataResult.Result == vds::Result::Success;
-			
-			return WasSuccessful;
-		}
-
-		bool UpdateFrame_NoWarn()
-		{
-			auto UpdateResult = this->Client.GetFrame();
-			bool WasSuccessful = UpdateResult.Result == vds::Result::Success;
-			return WasSuccessful;
-		}
-
-	};
-
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// Interface to VDS
-	//	Direct Client > ClientPullPreFetch
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// UpdateFrame()
-	//	Returns latest cached frame (up to a few miliseconds out of date e.g. up to 10ms lag with Vicon running at 100Hz)
-	//	Is non-blocking
-	// See description in:
-	//	VDS documentation > Client Class Reference > "SetStreamMode" method
-	class VDS_ClientPullPreFetch_Interface : public VDS_DirectClient_Interface
-	{
-	private:
-		//********************************************************************************
-		// Instance virtual functions from superclass
-		//****************************************
-		bool Initialise_Specifics_SteamMode()
-		{
-			vds::Output_SetStreamMode streamModeResult = this->Client.SetStreamMode ( vds::StreamMode::ClientPullPreFetch );
-			return streamModeResult.Result == vds::Result::Success;
-		}
-	};
-
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// Interface to VDS
-	//	Direct Client > ClientPull
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// UpdateFrame()
-	//	Requests a frame on call
-	//	Blocks until next frame is received
-	// See description in:
-	//	VDS documentation > Client Class Reference > "SetStreamMode" method
-	class VDS_ClientPull_Interface : public VDS_DirectClient_Interface
-	{
-	private:
-		//********************************************************************************
-		// Instance virtual functions from superclass
-		//****************************************
-		bool Initialise_Specifics_SteamMode()
-		{
-			vds::Output_SetStreamMode streamModeResult = this->Client.SetStreamMode ( vds::StreamMode::ClientPull );
-			return streamModeResult.Result == vds::Result::Success;
-		}
-	};
-
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// Interface to VDS
-	//	Direct Client > ServerPush
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// UpdateFrame()
-	//	Waits for the server to send the next frame
-	//	Blocks until next frame is received
-	// See description in:
-	//	VDS documentation > Client Class Reference > "SetStreamMode" method
-	class VDS_ServerPush_Interface : public VDS_DirectClient_Interface
-	{
-	private:
-		//********************************************************************************
-		// Instance virtual functions from superclass
-		//****************************************
-		bool Initialise_Specifics_SteamMode()
-		{
-			vds::Output_SetStreamMode streamModeResult = this->Client.SetStreamMode ( vds::StreamMode::ServerPush );
-			return streamModeResult.Result == vds::Result::Success;
-		}
-	};
-
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// Interface to VDS
-	//	Retimer Client
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// UpdateFrame()
-	//	Uses forward extrapolation to predict the current state of the system from the previous received frames
-	//	Is more susceptible to noise
-	//	Is non-blocking
-	// See description in:
-	//	VDS documentation > RetimingClient Class Reference > Detailed Description
-	//	VDS documentation > RetimingClient Class Reference > "UpdateFrame" method
-	class VDS_Retimer_Interface : public VDS_Interface<vds::RetimingClient>
-	{
-	private:
-		bool Initialise_Specifics()
-		{
-			return true;
-		}
-
-		bool UpdateFrame_NoWarn()
-		{
-			auto UpdateResult = this->Client.UpdateFrame();
-			bool WasSuccessful = UpdateResult.Result == vds::Result::Success;
-			return WasSuccessful;
-		}
-
-	};
-
 }

@@ -94,10 +94,8 @@ int main( int argc, char* argv[] )
 	for( uint64_t idx=0; idx<3; idx++ )
 	{
 		// Get new data frame from VDS
-		VDS.UpdateFrame();
-
 		// Re-encode data into Brandon's custom Points object
-		auto points = VDS.FrameToPoints();
+		auto points = VDS.GetFrame();
 
 		// Encode the next row of the CSV
 		//	The order will match the order in AllowedObjectsList

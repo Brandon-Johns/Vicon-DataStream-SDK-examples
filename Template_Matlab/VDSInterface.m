@@ -35,7 +35,7 @@ methods
         this.Connect;
     end
 
-    function Connect(this)
+    function this = Connect(this)
         % Connect to server
         this.vdsClient = ViconDataStreamSDK.DotNET.Client;
         this.vdsClient.Connect( this.hostName );
@@ -66,7 +66,7 @@ methods
             ViconDataStreamSDK.DotNET.Direction.Up );
     end
 
-    function Disconnect(this)
+    function this = Disconnect(this)
         this.vdsClient.Disconnect;
     end
 
@@ -75,7 +75,7 @@ methods
         points = VDSPoint.empty;
         frameInfo = struct('frameRate',nan, 'frameNumber',nan, 'latency',nan);
 
-        % Get next frame from datastream
+        % Get next frame from DataStream
         ret = this.vdsClient.GetFrame;
         if ret.Result ~= ViconDataStreamSDK.DotNET.Result.Success
             warning("BJ_ERROR: (VDS) Lost connection to Vicon Tracker");
@@ -117,7 +117,11 @@ methods
             % Test if object is occluded
             isOccluded = retP.Occluded || retR.Occluded;
             
-            points = [ points, VDSPoint(SubjectName, isOccluded, R, P) ];
+            % Append to list of points
+            % Ignore occluded points. They'll be added back on calls to VDSPoint.GetByName()
+            if ~isOccluded
+                points = [ points, VDSPoint(SubjectName, isOccluded, R, P) ];
+            end
         end
 
         % Apply filters

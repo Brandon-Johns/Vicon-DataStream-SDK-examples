@@ -14,15 +14,14 @@ properties (Access=private)
 end
 methods
     % Constructor
-    function this = VDSPoint(Name, IsOccluded, R, P)
+    function this = VDSPoint(Name, R, P)
         arguments
             Name
-            IsOccluded
-            R
-            P
+            R = nan(3,3)
+            P = nan(3,1)
         end
         this.name_ = Name;
-        this.isOccluded_ = IsOccluded;
+        this.isOccluded_ = all(isnan(R)) && all(isnan(P));
         this.R_ = R;
         this.x_ = P(1);
         this.y_ = P(2);
@@ -141,7 +140,7 @@ methods
             for idx = 1 : length(pointIdx)
                 if notFoundIdx(idx)
                     % Create not found points as occluded
-                    pointObject = [ pointObject, VDSPoint(nameIn(idx), true, zeros(3,3), zeros(3,1)) ];
+                    pointObject = [ pointObject, VDSPoint( nameIn(idx) ) ];
                 else
                     pointObject = [ pointObject, this( pointIdx(idx) ) ];
                 end

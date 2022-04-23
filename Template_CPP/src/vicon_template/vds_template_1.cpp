@@ -75,10 +75,8 @@ int main( int argc, char* argv[] )
 	while( true )
 	{
 		// Get new data frame from VDS
-		VDS.UpdateFrame();
-
 		// Re-encode data into Brandon's custom Points object
-		auto points = VDS.FrameToPoints();
+		auto points = VDS.GetFrame();
 
 		// Print everything
 		points.Print(*outData);
