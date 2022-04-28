@@ -23,12 +23,20 @@ Class Summary:
 
 */
 #pragma once
-#include "main.h"
 
 // Vicon DataStream SDK
 #include "DataStreamClient.h"
 #include "DataStreamRetimingClient.h"
 namespace vds = ViconDataStreamSDK::CPP;
+
+// Standard library
+#include <iostream>
+#include <mutex>
+#include <chrono>
+#include <thread>
+#include <vector>
+#include <stdexcept>
+#include <algorithm>
 
 
 namespace vdsi
@@ -67,7 +75,7 @@ namespace vdsi
 		{
 			// Validate input
 			if(this->R_rowMajor.size() != 9) { throw std::runtime_error("ERROR_VDS: R_rowMajor is wrong size"); }
-			if(this->R_P.size() != 3)        { throw std::runtime_error("ERROR_VDS: P is wrong size"); }
+			if(this->P.size() != 3)        { throw std::runtime_error("ERROR_VDS: P is wrong size"); }
 		}
 
 		//********************************************************************************
@@ -115,16 +123,14 @@ namespace vdsi
 		// OUTPUT: Copy of the found point
 		vdsi::Point Get(std::string name)
 		{
-			uint64_t position = 0;
-			for(auto& point : this->all)
+			for(auto&& point : this->all)
 			{
-				// Return upon finding point
-				if (point.viconObjectName == name) { return vdsi::Points::Result_Find(position); }
-				position++;
+				// Return copy of point upon finding
+				if (point.viconObjectName == name) { return vdsi::Point(point); }
 			}
 
 			// No point found => return occluded
-			return BJ::CE_Point(name);
+			return vdsi::Point(name);
 		}
 	};
 
@@ -147,6 +153,7 @@ namespace vdsi
 		std::atomic<bool> IsConnected = false;
 		std::atomic<bool> IsKillReqest = false;
 		std::atomic<bool> IsFrameReady = false;
+		std::atomic<bool> HasLatestFrameBeenRead = false;
 		vdsi::Points LatestFrame;
 		std::mutex mtx_LatestFrame;
 
@@ -179,8 +186,8 @@ namespace vdsi
 
 			// Apply options
 			bool lightweightResult = EnableLightweight ? this->Client.EnableLightweightSegmentData().Result != vds::Result::Success : true;
-			bool streamModeResult = this->Client.SetStreamMode( vds::StreamMode::ServerPush ) == vds::Result::Success;
-			bool segmentDataResult = this->Client.EnableSegmentData() == vds::Result::Success;
+			bool streamModeResult = this->Client.SetStreamMode( vds::StreamMode::ServerPush ).Result == vds::Result::Success;
+			bool segmentDataResult = this->Client.EnableSegmentData().Result == vds::Result::Success;
 			bool wasSuccessful =
 				   lightweightResult
 				&& streamModeResult
@@ -189,7 +196,8 @@ namespace vdsi
 
 			// Start thread to listen for data
 			this->IsKillReqest = false;
-			this->IsReady = false;
+			this->IsFrameReady = false;
+			this->HasLatestFrameBeenRead = false;
 			this->UpdateThread = std::make_unique<std::thread>( [this] { this->UpdateFrameInBackground(); });
 
 			std::cout << "INFO_VDS: Ready to capture data" << std::endl;
@@ -216,7 +224,7 @@ namespace vdsi
 		// Interace: Settings
 		//****************************************
 		// PURPOSE:
-		//	Apply filter to show only the object in our allow list
+		//	Apply filter to show only the objects in our allow list
 		//	VDS actually already implements this.... but it just sets blocked objects to occluded
 		// INPUT:
 		//	Names of all the objects that you want to capture. Other captured objects will be discarded
@@ -234,13 +242,13 @@ namespace vdsi
 		void DisableOccludedFilter() { this->IsOccludedFilterActive = false; }
 
 		//********************************************************************************
-		// Interface: Control during operation
+		// Interface: Get data frames
 		//****************************************
 		// PURPOSE:
 		//	Same as GetFrame() but blocks until the next frame arrives
 		vdsi::Points GetFrame_WaitForNew()
 		{
-			this->IsReady = false;
+			this->IsFrameReady = false;
 			return this->GetFrame();
 		}
 
@@ -250,8 +258,7 @@ namespace vdsi
 		//		Otherwise, block until the next unread frame arrives
 		vdsi::Points GetFrame_GetUnread()
 		{
-			// TODO
-			//this->IsReady = false;
+			if(this->HasLatestFrameBeenRead) {this->IsFrameReady = false;}
 			return this->GetFrame();
 		}
 
@@ -262,19 +269,20 @@ namespace vdsi
 		{
 			if( ! this->IsConnected )
 			{
-				std::cout << "WARNING_VDS: Not Connected" << std::endl;
+				std::cout << "WARNING_VDS: (GetFrame) Not Connected" << std::endl;
 				return vdsi::Points();
 			}
 
 			// Block until thread signals ready
-			while( ! this->IsReady ) { std::this_thread::sleep_for(std::chrono::microseconds(1)); }
+			while( ! this->IsFrameReady ) { std::this_thread::sleep_for(std::chrono::microseconds(1)); }
 
 			// This statement is written very specifically to invoke the copy contructor of vdsi::Points
 			// See syntax differences to call copy constructor VS operator=
 			this->mtx_LatestFrame.lock();
-			auto LatestFrame_copy = this->LatestFrame;
+			auto LatestFrame_copy(this->LatestFrame);
 			this->mtx_LatestFrame.unlock();
 
+			this->HasLatestFrameBeenRead = true;
 			return LatestFrame_copy;
 		}
 
@@ -291,7 +299,7 @@ namespace vdsi
 				auto UpdateResult = Client.GetFrame();
 
 				// Create object holding frame data
-				BJ::CE_Points LatestFrame_internal = this->DecodeFrame();
+				vdsi::Points LatestFrame_internal = this->DecodeFrame();
 
 				// Replace public reference to the previous frame with the new frame
 				this->mtx_LatestFrame.lock();
@@ -299,7 +307,8 @@ namespace vdsi
 				this->mtx_LatestFrame.unlock();
 
 				// (Only first loop) Unblock GetFrame()
-				this->IsReady = true;
+				this->HasLatestFrameBeenRead = false;
+				this->IsFrameReady = true;
 			}
 		}
 
@@ -308,6 +317,7 @@ namespace vdsi
 		//	Decode the data frame
 		//	Apply filtering
 		vdsi::Points DecodeFrame()
+		{
 			// Object to return
 			vdsi::Points Points;
 
@@ -332,13 +342,13 @@ namespace vdsi
 
 				// Global translation
 				vds::Output_GetSegmentGlobalTranslation ret_P = this->Client.GetSegmentGlobalTranslation(SubjectName, SegmentName);
-				std::array<double,3> P;
+				std::vector<double> P;
 				std::copy(std::begin(ret_P.Translation), std::end(ret_P.Translation), std::begin(P));
 
 				// Global rotation matrix
 				//	Note: Vicon uses row major order
 				vds::Output_GetSegmentGlobalRotationMatrix ret_R = this->Client.GetSegmentGlobalRotationMatrix(SubjectName, SegmentName);
-				std::array<double,9> R;
+				std::vector<double> R;
 				std::copy(std::begin(ret_R.Rotation), std::end(ret_R.Rotation), std::begin(R));
 
 				// The occluded return value is broken - Always gives 0 (meaning not occluded)
@@ -364,69 +374,50 @@ namespace vdsi
 						&& ret_P.Translation[2] == 0
 					);
 
-				// Make point
-				auto point = std::make_shared<vdsi::Point>(SubjectName, R, P, IsOccluded);
-
 				// Save point to the return object if allowed by filters
-				if(this->AllowedByFilters(point))
-				{
-					Points.AddPoint(point);
-				}
+				vdsi::Point point(SubjectName, R, P, IsOccluded);
+				if(this->AllowedByFilters(point)) { Points.AddPoint(point); }
 			}
 			
-			// If Object filter enabled & show occluded, then output in same order as filter_AllowedObjects
-			if( !this->IsOccludedFilterActive && this->IsObjectFilterActive)
-			{
-				vdsi::Points Points_sorted;
-				for(auto& allowedObject_name : this->filter_AllowedObjects)
-				{
-					vdsi::point_ptr point = Points.Get(allowedObject_name);
-					if(!point)
-					{
-						// Point not found => create as occluded
-						std::array<double,3> P = {};
-						std::array<double,9> R = {};
-						bool IsOccluded = true;
-						point = std::make_shared<vdsi::Point>(allowedObject_name, R, P, IsOccluded);
-					}
-					Points_sorted.AddPoint(point);
-				}
-				Points = Points_sorted;
-			}
-
-			return Points;
+			// Apply AllowedObjects filter if enabled
+			return this->SortByObjectFilter(Points);
 		}
 
 		//********************************************************************************
 		// Helper functions
 		//****************************************
 		// PURPOSE: Test if the point is alloed by the currently active filters
-		// INPUT: shared_prt to Point
-		bool AllowedByFilters(point_ptr point)
+		bool AllowedByFilters(const vdsi::Point& point)
 		{
-			// Apply filters
-			if(this->IsOccludedFilterActive && point->IsOccluded)
-			{
-				return false;
-			}
+			// Occluded filter
+			if(this->IsOccludedFilterActive && point.IsOccluded) {return false;}
 
-			bool PassesObjectFilter = true;
-			if(this->IsObjectFilterActive)
+			// Object filter
+			if( ! this->IsObjectFilterActive ) {return true;}
+			// Seach allowed objects list
+			for(auto&& allowedObject_name : this->filter_AllowedObjects)
 			{
-				PassesObjectFilter = false;
-
-				// Seach allowed objects list
-				for(auto allowedObject_name : this->filter_AllowedObjects)
-				{
-					if(point->viconObjectName == allowedObject_name)
-					{
-						// Found on allow list
-						PassesObjectFilter = true;
-						break;
-					}
-				}
+				if(point.viconObjectName == allowedObject_name) {return true;}
 			}
-			return PassesObjectFilter;
+			// Not on allow list
+			return false;
+		}
+
+		// PURPOSE: Sort Points by the ordering specified in the AllowedObjects filter
+		// If the filter is not active, return the input
+		vdsi::Points SortByObjectFilter(vdsi::Points& Points) {
+			if( ! this->IsObjectFilterActive ) {return Points; }
+
+			vdsi::Points Points_sorted;
+			for(auto&& allowedObject_name : this->filter_AllowedObjects)
+			{
+				vdsi::Point point = Points.Get(allowedObject_name);
+
+				// Save point to the return object if allowed by filters
+				//	i.e. apply occluded filter
+				if(this->AllowedByFilters(point)) { Points_sorted.AddPoint(point); }
+			}
+			return Points_sorted;
 		}
 	};
 }

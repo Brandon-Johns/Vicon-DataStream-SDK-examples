@@ -7,6 +7,7 @@ cmake_minimum_required (VERSION 3.8)
 ##########################################
 set(LIBRARIES
 	${VICONDS_LIB}
+	${Threads_Lib}
 )
 
 set(LIBRARIES_DIR 

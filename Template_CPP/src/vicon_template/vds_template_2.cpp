@@ -53,7 +53,7 @@ int main( int argc, char* argv[] )
 	// Choose a Vicon DataStream client
 	//vdsi::VDS_ServerPush_Interface VDS;
 	//vdsi::VDS_ClientPull_Interface VDS;
-	vdsi::VDS_ClientPullPreFetch_Interface VDS;
+	vdsi::VDS_Interface VDS;
 	//vdsi::VDS_Retimer_Interface VDS;
 
 	//************************************************************
@@ -61,7 +61,7 @@ int main( int argc, char* argv[] )
 	//******************************
 	// Start to VDS
 	std::cout << "BJ: Connecting to VDS" << std::endl;
-	VDS.Initialise(vds_HostName, Flag_VDS_Lightweight);
+	VDS.Connect(vds_HostName, Flag_VDS_Lightweight);
 
 	// For exporting to CSV, it is important to always have the same number of objects captured
 	//	=> Must use the filter & must print occluded objects
@@ -78,12 +78,11 @@ int main( int argc, char* argv[] )
 	std::vector<std::string> RP_string = {"R11","R12","R13", "R21","R22","R23", "R31","R32","R33", "P1","P2","P3"};
 	for(auto& object : AllowedObjectsList)
 	{
-		auto RP_string_point = RP_string;
-		for(auto& str : RP_string_point)
-		{
-			// Column name format: objectName_ElementOfMatrixName
-			str = object + "_" + str;
-		};
+		// Copy string vector
+		// Format columns as: objectName_ElementOfMatrixName
+		// Add to header
+		auto RP_string_point(RP_string);
+		for(auto& str : RP_string_point) { str = object + "_" + str; };
 		HeaderBuilder.AddData(RP_string_point);
 	}
 	ExportCSV.AddHeadder(HeaderBuilder.Row);
@@ -102,8 +101,8 @@ int main( int argc, char* argv[] )
 		csv_exporter::Export_CSV_RowBuilder<double> RowBuilder;
 		for(auto& point : points.all)
 		{
-			RowBuilder.AddData(point->R_rowMajor_vec());
-			RowBuilder.AddData(point->P_vec());
+			RowBuilder.AddData(point.R_rowMajor);
+			RowBuilder.AddData(point.P);
 		}
 		ExportCSV.AddRow(RowBuilder.Row);
 

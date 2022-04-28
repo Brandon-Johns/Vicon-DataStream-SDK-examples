@@ -6,63 +6,78 @@ project ("VDS_Template_By_Brandon")
 # Written by:		Brandon Johns
 # Version created:	2021-11-05
 # Last edited:		2021-11-05
+# Purpose:			Template and Examples to use the Vicon DataStream SDK Version 1.11.0
+
+# Instructions:
+#	Check all file paths. They should be specified per their location on your computer
+#	e.g. VICONDS_LIB_DIR and VICONDS_INC_DIR
+
+
+####################################################################################
+# Key locations
+##########################################
+# This CMake project
+set(PROJECT_DIR         "${CMAKE_CURRENT_LIST_DIR}/.." CACHE PATH "dir This CMake Project")
+set(PROJECT_DIR_RUNTIME "${PROJECT_DIR}/bin"           CACHE PATH "dir to output exe into")
+
 
 ####################################################################################
 # General options
 ##########################################
-# Use C++20
 set(CMAKE_CXX_STANDARD 20)
 
-# Compiler flags
-# Could split between debug and release versions... not nessesary rn
-#	More compiler warnings: -Wall -Wextra
-#	Add debugging symbols to executable: -g
-#	Opimise: -O3
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+# Compiler flags (Assumes GCC compiler)
+if(NOT WIN32)
+	# Add debugging symbols to executable
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-# This part is hell
-#	Enable backwards compatibility warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wabi-tag")
-#	Enable backwards compatibility mode
-#	Try toggle this to "=1" if you have problems
-#	If you're still having problems after that... you can either ditch your other libraries or recompile them all with this flag
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+	# This part addresses issues specific to the Vicon DataStream SDK
+	#	-Wabi-tag
+	#		Enable backwards compatibility warnings
+	#	-D_GLIBCXX_USE_CXX11_ABI=0
+	#		Please see: https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html
+	#		If you have problems, try toggle this between 0 or 1
+	#		Example issue: compile error or segfault when building with other libraries
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wabi-tag")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+endif()
 
 # For VSCode extention "clangd"
 #	CMAKE_EXPORT_COMPILE_COMMANDS generates the "compile_commands.json" file in the build dir
 #	Reload the "clangd" extension to make it find the file
 #set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Path for output exe
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_DIR_RUNTIME}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}") # For Windows
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}") # For Windows
+
 ####################################################################################
-# Host machine dependent
+# Paths to: Libraries, Includes (library header files), Packages
 ##########################################
-# Identify the current computer by checking the hostname
-# 	Should be unique in most cases
-#	Otherwise, try check "if(WIN32)" or something else unique about the setup
-#	Good variables to check:
-#		https://cmake.org/cmake/help/latest/command/cmake_host_system_information.html
+# These paths are dependent on the machine you're working on
+# Hence, try to identify your current mahcine by checking the hostname and other info
+#	Good variables to check: https://cmake.org/cmake/help/latest/command/cmake_host_system_information.html
+# Then Setup your machine in an elseif statement
 
 cmake_host_system_information(RESULT HOSTNAME_THIS_PC QUERY HOSTNAME)
-message("BJ: hostname for this comuter: ${HOSTNAME_THIS_PC}")
+message("VDS: hostname for this comuter: ${HOSTNAME_THIS_PC}")
 
-# !! Change the paths in here to your project location
-# !! Then change the string to the hostname of your computer
-if("${HOSTNAME_THIS_PC}" STREQUAL "acrv-All-Series")
-	# UR5 Computer
-	set(BJ_PROJECT_DIR "/path_to_project_root")
-	set(BJ_LIB_DIR "${BJ_PROJECT_DIR}/lib_ubuntu")
+# Windows: All windows installs should look the same
+if(WIN32)
+	# VDS
+	set(VICONDS_LIB_DIR "C:/Program Files/Vicon/DataStream SDK/Win64/CPP" CACHE PATH "dir vicon lib")
+	set(VICONDS_INC_DIR "C:/Program Files/Vicon/DataStream SDK/Win64/CPP" CACHE PATH "dir vicon h")
 
-	# Paths to: Libraries, Includes (library header files), Packages
-	#	Vicon Data Stream SDK
-	set(VICONDS_LIB_DIR "${BJ_LIB_DIR}" CACHE PATH "dir vicon lib")
-	set(VICONDS_INC_DIR "${BJ_LIB_DIR}" CACHE PATH "dir vicon h")
+# Add other computers
+#elseif("${HOSTNAME_THIS_PC}" STREQUAL "")
+	# VDS
+	#set(VICONDS_LIB_DIR "???" CACHE PATH "dir vicon lib")
+	#set(VICONDS_INC_DIR "???" CACHE PATH "dir vicon h")
 
 else()
-	message(FATAL_ERROR "BJ: Hostname does not match. Setup this host machine in the top-level CMake file")
+	message(FATAL_ERROR "VDS: Setup this machine in the top-level CMake file")
 endif()
-
-# Path for output exe
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BJ_PROJECT_DIR}/bin")
 
 ####################################################################################
 # Find all libraries & packages
@@ -72,15 +87,17 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BJ_PROJECT_DIR}/bin")
 #	Windows filename: x.dll (shared library)
 #	Linux filename: libx.a
 #	Linux filename: libx.so (shared library)
-# You can change this if you need (google it), but otherwise, input your libraries without the prefix & suffix
 
 # Find libraries (<varName> <fileName> <filePath> DOC <docstring>)
-find_library(VICONDS_LIB "ViconDataStreamSDK_CPP" ${VICONDS_LIB_DIR} DOC "libViconDataStreamSDK_CPP lib")
+find_library(VICONDS_LIB "ViconDataStreamSDK_CPP" ${VICONDS_LIB_DIR} DOC "libViconDataStreamSDK_CPP lib" REQUIRED)
+
+find_package(Threads REQUIRED)
+set(THREADS_LIB "Threads::Threads")
 
 ####################################################################################
 # Projects to build
 ##########################################
-# Include sub-projects (folders with other CMakeList.txt files)
+# Include sub-projects (sub-folders with other CMakeList.txt files)
 
 add_subdirectory ("vicon_template")
 #add_subdirectory ("my_other_project_folder")
