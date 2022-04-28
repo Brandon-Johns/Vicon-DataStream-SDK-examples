@@ -89,7 +89,7 @@ endif()
 #	Linux filename: libx.so (shared library)
 
 # Find libraries (<varName> <fileName> <filePath> DOC <docstring>)
-find_library(VICONDS_LIB "ViconDataStreamSDK_CPP" ${VICONDS_LIB_DIR} DOC "libViconDataStreamSDK_CPP lib" REQUIRED)
+find_library(VICONDS_LIB "ViconDataStreamSDK_CPP" PATHS ${VICONDS_LIB_DIR} DOC "libViconDataStreamSDK_CPP lib" REQUIRED)
 
 find_package(Threads REQUIRED)
 set(THREADS_LIB "Threads::Threads")

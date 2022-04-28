@@ -1,7 +1,7 @@
 /*
 Written by:			Brandon Johns
 Version created:	2021-12-06
-Last edited:		2021-12-13
+Last edited:		2022-04-28
 
 Version changes:
 	NA
@@ -40,9 +40,6 @@ int main( int argc, char* argv[] )
 	// Network addresses of the computer running Vicon Tracker 3
 	constexpr auto vds_HostName = "192.168.11.3";
 
-	// Lightweight Segment Data Enable
-	constexpr bool Flag_VDS_Lightweight = false;
-
 	// List all the objects to be allowed through filtering
 	// Prevents ghosts of other peoples objects from interfereing with the output
 	std::vector<std::string> AllowedObjectsList;
@@ -50,17 +47,12 @@ int main( int argc, char* argv[] )
 	AllowedObjectsList.push_back(NAME_MyViconObject2);
 	AllowedObjectsList.push_back(NAME_MyViconObject3);
 
-	// Choose a Vicon DataStream client
-	//vdsi::VDS_ServerPush_Interface VDS;
-	//vdsi::VDS_ClientPull_Interface VDS;
-	vdsi::VDS_Interface VDS;
-	//vdsi::VDS_Retimer_Interface VDS;
-
 	//************************************************************
 	// Initialise
 	//******************************
 	// Start to VDS
 	std::cout << "BJ: Connecting to VDS" << std::endl;
+	vdsi::VDS_Interface VDS;
 	VDS.Connect(vds_HostName, Flag_VDS_Lightweight);
 
 	// For exporting to CSV, it is important to always have the same number of objects captured
@@ -70,7 +62,7 @@ int main( int argc, char* argv[] )
 
 	// The input estimate number of rows is not strict, you can go over, but performance will suffer
 	// as memory will have to be reallocated.
-	// VDS operates at 100 fps, so 10 second trail gives 10000 frames
+	// Assuming VDS operates at 100 fps, a 10 second trail gives 10000 frames
 	csv_exporter::ExportCSV ExportCSV(10000);
 
 	// First row (header row) of the CSV

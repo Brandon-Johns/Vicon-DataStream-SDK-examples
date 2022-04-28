@@ -1,7 +1,7 @@
 /*
 Written by:			Brandon Johns
 Version created:	2021-11-04
-Last edited:		2022-04-22
+Last edited:		2022-04-28
 
 Version changes:
 	NA
@@ -143,6 +143,9 @@ namespace vdsi
 	private:
 		vds::Client Client;
 
+		// System data
+		std::atomic<double> ViconFrameRate = nan("");
+
 		// User settings: Filter enables and list
 		std::atomic<bool> IsObjectFilterActive = false;
 		std::atomic<bool> IsOccludedFilterActive = false;
@@ -200,6 +203,9 @@ namespace vdsi
 			this->HasLatestFrameBeenRead = false;
 			this->UpdateThread = std::make_unique<std::thread>( [this] { this->UpdateFrameInBackground(); });
 
+			// Get first frame to initialise
+			this->GetFrame();
+
 			std::cout << "INFO_VDS: Ready to capture data" << std::endl;
 			this->IsConnected = true;
 		}
@@ -244,6 +250,10 @@ namespace vdsi
 		//********************************************************************************
 		// Interface: Get data frames
 		//****************************************
+		// PURPOSE:
+		//	Get Frame rate of the vicon system [Hz]
+		double GetFrameRate() { return this->ViconFrameRate; }
+
 		// PURPOSE:
 		//	Same as GetFrame() but blocks until the next frame arrives
 		vdsi::Points GetFrame_WaitForNew()
@@ -297,6 +307,9 @@ namespace vdsi
 			{
 				// Wait for next frame
 				auto UpdateResult = Client.GetFrame();
+
+				// Retrieve system data
+				this->ViconFrameRate = Client.GetFrameRate().FrameRateHz;
 
 				// Create object holding frame data
 				vdsi::Points LatestFrame_internal = this->DecodeFrame();

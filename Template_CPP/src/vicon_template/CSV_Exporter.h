@@ -1,7 +1,7 @@
 /*
 Written by:			Brandon Johns
 Version created:	2021-12-13
-Last edited:		2021-12-13
+Last edited:		2022-04-28
 
 Version changes:
 	NA
@@ -20,7 +20,13 @@ Summary:
 
 */
 #pragma once
-#include "main.h"
+
+// Standard library
+#include <stdexcept>
+#include <iostream>
+#include <fstream> // read/write to files
+#include <vector>
+
 
 namespace csv_exporter
 {
@@ -46,7 +52,7 @@ namespace csv_exporter
 			// Enforce all rows are the same length
 			if(this->rowLength_IsSet)
 			{
-				if(rowLength_in != this->rowLength) { throw std::runtime_error("BJ_ERROR: Row lengths do not match"); }
+				if(rowLength_in != this->rowLength) { throw std::runtime_error("csv_exporter_ERROR: Row lengths do not match"); }
 			}
 			else // First row => set as row length
 			{
