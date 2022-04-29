@@ -1,7 +1,7 @@
 /*
 Written by:			Brandon Johns
 Version created:	2021-12-06
-Last edited:		2022-04-28
+Last edited:		2022-04-29
 
 Version changes:
 	NA
@@ -11,14 +11,25 @@ Purpose:
 	This version saves all data and prints it into a CSV
 
 */
-#include "main.h"
+// Program output
+#include <iostream>
+#include <fstream> // read/write to files
+
+// Other
+#include <chrono> // Time keeping
+#include <thread> // For sleep
+#include <vector>
+
+// Brandon's VDS Interface
+#include "VDS_Interface.h"
+#include "CSV_Exporter.h"
 
 
 namespace
 {
 	// Vicon object names
 	// (add all your objects)
-	constexpr auto NAME_MyViconObject1 = "bj_c1_bh";
+	constexpr auto NAME_MyViconObject1 = "Jackle";
 	constexpr auto NAME_MyViconObject2 = "bj_c1_cwm";
 	constexpr auto NAME_MyViconObject3 = "someOtherObject";
 }
@@ -53,7 +64,7 @@ int main( int argc, char* argv[] )
 	// Start to VDS
 	std::cout << "BJ: Connecting to VDS" << std::endl;
 	vdsi::VDS_Interface VDS;
-	VDS.Connect(vds_HostName, Flag_VDS_Lightweight);
+	VDS.Connect(vds_HostName);
 
 	// For exporting to CSV, it is important to always have the same number of objects captured
 	//	=> Must use the filter & must print occluded objects

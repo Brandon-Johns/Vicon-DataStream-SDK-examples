@@ -36,7 +36,7 @@ if ( -not $exeName.EndsWith(".exe") ) { $exeName += ".exe" }
 if    ( Test-Path $exeName                      -PathType "Leaf" ) { $exePath = $exeName }
 elseif( Test-Path (Join-Path "../bin" $exeName) -PathType "Leaf" ) { $exePath = (Join-Path "../bin" $exeName) }
 else { throw "input file not found" }
-$exeName = Resolve-Path($exeName)
+$exePath = Resolve-Path($exePath)
 
 
 # DLLs: Temporaraly add to path

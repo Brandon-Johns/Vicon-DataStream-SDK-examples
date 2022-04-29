@@ -1,7 +1,7 @@
 /*
 Written by:			Brandon Johns
 Version created:	2021-11-04
-Last edited:		2022-04-28
+Last edited:		2022-04-29
 
 Version changes:
 	NA
@@ -12,14 +12,25 @@ Purpose:
 		e.g. for feedback into a controller
 
 */
-#include "main.h"
+// Program output
+#include <iostream>
+#include <fstream> // read/write to files
+
+// Other
+#include <chrono> // Time keeping
+#include <thread> // For sleep
+#include <vector>
+
+// Brandon's VDS Interface
+#include "VDS_Interface.h"
+#include "CSV_Exporter.h"
 
 
 namespace
 {
 	// Vicon object names
 	// (add all your objects)
-	constexpr auto NAME_MyViconObject1 = "bj_c1_bh";
+	constexpr auto NAME_MyViconObject1 = "Jackle";
 	constexpr auto NAME_MyViconObject2 = "bj_c1_cwm";
 	constexpr auto NAME_MyViconObject3 = "someOtherObject";
 }
@@ -51,17 +62,12 @@ int main( int argc, char* argv[] )
 	AllowedObjectsList.push_back(NAME_MyViconObject2);
 	AllowedObjectsList.push_back(NAME_MyViconObject3);
 
-	// Choose a Vicon DataStream client
-	//vdsi::VDS_ServerPush_Interface VDS;
-	//vdsi::VDS_ClientPull_Interface VDS;
-	vdsi::VDS_Interface VDS;
-	//vdsi::VDS_Retimer_Interface VDS;
-
 	//************************************************************
 	// Initialise
 	//******************************
 	// Start to VDS
 	std::cout << "BJ: Connecting to VDS" << std::endl;
+	vdsi::VDS_Interface VDS;
 	VDS.Connect(vds_HostName, Flag_VDS_Lightweight);
 
 	// Toggle options as desired

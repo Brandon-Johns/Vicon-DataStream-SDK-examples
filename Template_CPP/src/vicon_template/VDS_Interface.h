@@ -202,12 +202,12 @@ namespace vdsi
 			this->IsFrameReady = false;
 			this->HasLatestFrameBeenRead = false;
 			this->UpdateThread = std::make_unique<std::thread>( [this] { this->UpdateFrameInBackground(); });
+			this->IsConnected = true;
 
 			// Get first frame to initialise
 			this->GetFrame();
 
 			std::cout << "INFO_VDS: Ready to capture data" << std::endl;
-			this->IsConnected = true;
 		}
 
 		// PURPOSE:
@@ -229,6 +229,11 @@ namespace vdsi
 		//********************************************************************************
 		// Interace: Settings
 		//****************************************
+		// NOTES:
+		//	Upon changing settings, force the next read to get a new frame
+		//	as the frame in the buffer applies the old settings, which could cause difficult to debug errors in user programs
+		//	(difficult to debug because setting breakpoints allows enough time for the next frame to be read... removing the problem only while debugging)
+
 		// PURPOSE:
 		//	Apply filter to show only the objects in our allow list
 		//	VDS actually already implements this.... but it just sets blocked objects to occluded
@@ -238,14 +243,15 @@ namespace vdsi
 		{
 			this->IsObjectFilterActive = true;
 			this->filter_AllowedObjects = allowedObjects;
+			this->IsFrameReady = false;
 		}
 
 		// PUTPOSE: Show all captured objects in the output
 		// PUTPOSE: Do not show occluded objects in the output
 		// PUTPOSE: Show all captured objects in the output
-		void DisableObjectFilter()   { this->IsObjectFilterActive = false; }
-		void EnableOccludedFilter()  { this->IsOccludedFilterActive = true; }
-		void DisableOccludedFilter() { this->IsOccludedFilterActive = false; }
+		void DisableObjectFilter()   { this->IsObjectFilterActive = false;   this->IsFrameReady = false; }
+		void EnableOccludedFilter()  { this->IsOccludedFilterActive = true;  this->IsFrameReady = false; }
+		void DisableOccludedFilter() { this->IsOccludedFilterActive = false; this->IsFrameReady = false;}
 
 		//********************************************************************************
 		// Interface: Get data frames
@@ -355,14 +361,12 @@ namespace vdsi
 
 				// Global translation
 				vds::Output_GetSegmentGlobalTranslation ret_P = this->Client.GetSegmentGlobalTranslation(SubjectName, SegmentName);
-				std::vector<double> P;
-				std::copy(std::begin(ret_P.Translation), std::end(ret_P.Translation), std::begin(P));
+				std::vector<double> P(std::begin(ret_P.Translation), std::end(ret_P.Translation));
 
 				// Global rotation matrix
 				//	Note: Vicon uses row major order
 				vds::Output_GetSegmentGlobalRotationMatrix ret_R = this->Client.GetSegmentGlobalRotationMatrix(SubjectName, SegmentName);
-				std::vector<double> R;
-				std::copy(std::begin(ret_R.Rotation), std::end(ret_R.Rotation), std::begin(R));
+				std::vector<double> R(std::begin(ret_R.Rotation), std::end(ret_R.Rotation));
 
 				// The occluded return value is broken - Always gives 0 (meaning not occluded)
 				// I'd like to do this:
