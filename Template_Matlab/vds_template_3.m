@@ -1,7 +1,7 @@
 %{
 Written By: Brandon Johns
 Date Version Created: 2022-04-21
-Date Last Edited: 2022-04-21
+Date Last Edited: 2022-04-29
 Status: functional
 Dependencies:
     VDSInterface.m
@@ -42,6 +42,7 @@ vdsi = VDSInterface(hostName, lightWeightMode).Connect;
 [~, frameInfo] = vdsi.GetFrame;
 frameRate = frameInfo.frameRate;
 
+% Capture data
 frameNumber = zeros(runDuration*frameRate, 1);
 points = VDSPoint.empty;
 for idx = 1 : length(frameNumber)

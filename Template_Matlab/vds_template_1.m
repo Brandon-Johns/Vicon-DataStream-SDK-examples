@@ -1,7 +1,7 @@
 %{
 Written By: Brandon Johns
 Date Version Created: 2022-04-21
-Date Last Edited: 2022-04-21
+Date Last Edited: 2022-04-29
 Status: functional
 Dependencies:
     VDSInterface.m
@@ -65,5 +65,12 @@ euler = myObjects.euler
 T = myObjects.T{:}
 
 
-
-
+figure
+hold on
+plotTransforms([0,0,0], [1,0,0,0])
+plotTransforms(points.GetByName("Jackle").P{1}.'/1000, points.GetByName("Jackle").quat{1})
+xlabel("x (m)")
+xlabel("y (m)")
+xlabel("z (m)")
+grid on
+hold off

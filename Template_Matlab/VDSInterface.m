@@ -120,7 +120,7 @@ methods
             % Append to list of points
             % Ignore occluded points. They'll be added back on calls to VDSPoint.GetByName()
             if ~isOccluded
-                points = [ points, VDSPoint(SubjectName, isOccluded, R, P) ];
+                points = [ points, VDSPoint(SubjectName, R, P) ];
             end
         end
 

@@ -1,7 +1,7 @@
 %{
 Written By: Brandon Johns
 Date Version Created: 2022-04-14
-Date Last Edited: 2022-04-21
+Date Last Edited: 2022-04-29
 Status: functional
 Dependencies:
     VDSInterface.m
@@ -31,7 +31,7 @@ vdsi = VDSInterface(hostName, lightWeightMode).Connect;
 % Collect data
 while true
     % Get next data frame
-    points = vdsi.GetFrame;
+    [points, frameInfo] = vdsi.GetFrame;
 
     %********************************************************************************************************
     % Do something with the output data
@@ -40,6 +40,7 @@ while true
     % Operate on a subset of the points
     jackle = points.GetByName("Jackle");
     predestrian = points.GetByName("Pedestrian");
+    fprintf("%d\t", frameInfo.frameNumber);
     fprintf("%s:[%8.1f, %8.1f, %8.1f]\t", jackle.Name, jackle.x, jackle.y, jackle.z);
     fprintf("%s:[%8.1f, %8.1f, %8.1f]\t", predestrian.Name, predestrian.x, predestrian.y, predestrian.z);
     fprintf("\n");

@@ -21,7 +21,7 @@ methods
             P = nan(3,1)
         end
         this.name_ = Name;
-        this.isOccluded_ = all(isnan(R)) && all(isnan(P));
+        this.isOccluded_ = all(isnan(R),'all') && all(isnan(P),'all');
         this.R_ = R;
         this.x_ = P(1);
         this.y_ = P(2);
@@ -86,7 +86,7 @@ methods
     function out = euler(this, sequence)
         arguments
             this
-            sequence(1,1) string = "ZYX"
+            sequence(1,1) string = "XYZ"
         end
         out = cell(size(this));
         for idx = 1:numel(this)
