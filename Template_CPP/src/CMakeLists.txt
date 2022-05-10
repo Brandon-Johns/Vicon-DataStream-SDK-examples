@@ -69,14 +69,11 @@ if(WIN32)
 	set(VICONDS_LIB_DIR "C:/Program Files/Vicon/DataStream SDK/Win64/CPP" CACHE PATH "dir vicon lib")
 	set(VICONDS_INC_DIR "C:/Program Files/Vicon/DataStream SDK/Win64/CPP" CACHE PATH "dir vicon h")
 
-# Add other computers
-#elseif("${HOSTNAME_THIS_PC}" STREQUAL "")
+# Linux: All installs should look the same if VDS is installed per the instructions
+else
 	# VDS
-	#set(VICONDS_LIB_DIR "???" CACHE PATH "dir vicon lib")
-	#set(VICONDS_INC_DIR "???" CACHE PATH "dir vicon h")
-
-else()
-	message(FATAL_ERROR "VDS: Setup this machine in the top-level CMake file")
+	set(VICONDS_LIB_DIR "${PROJECT_DIR}/lib_ubuntu/vds" CACHE PATH "dir vicon lib")
+	set(VICONDS_INC_DIR "${PROJECT_DIR}/lib_ubuntu/vds" CACHE PATH "dir vicon h")
 endif()
 
 ####################################################################################

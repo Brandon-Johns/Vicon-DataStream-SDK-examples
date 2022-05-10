@@ -227,7 +227,7 @@ namespace vdsi
 		}
 
 		//********************************************************************************
-		// Interace: Settings
+		// Interface: Settings
 		//****************************************
 		// NOTES:
 		//	Upon changing settings, force the next read to get a new frame

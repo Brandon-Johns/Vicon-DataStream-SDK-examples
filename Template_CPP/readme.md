@@ -3,24 +3,49 @@ Vicon DataStream SDK - Template Projects (Not Official)
 
 I wrote this to be friendly if it's your first CMake project
 
+## Setup (Windows)
+1. Install the Vicon DataStream SDK
+	- Download the Vicon DataStream SDK
+	- Run the Win64 installer
+	- The C++ DLLs should install to `C:/Program Files/Vicon/DataStream SDK/Win64/CPP`
+
+2. Configure the Windows PATH
+	- Option 1 (Recommended): Add `C:/Program Files/Vicon/DataStream SDK/Win64/CPP` to the Windows PATH Variable
+	- Option 2: Copy paste the C++ DLLs to `Template_CPP/bin`
+	- Option 3: Whenever executing a built exe, use the powershell script `Template_CPP\scripts\VDSI_runExe.ps1`
+
+3. Configure the example files `Template_CPP/src/vicon_template/vds_template_#.cpp`
+	- Change the lines
+		- `constexpr auto NAME_MyViconObject1 = "bj_c1_bh";`
+		- `constexpr auto vds_HostName = "192.168.11.3";`
+	- To
+		- The name of the object defined in Vicon Tracker
+		- The IP address of the Vicon Control Computer
+
+## Build and run (Windows)
+1. Open Visual Studio
+2. Select `File > Open > CMake...`, then select `Template_CPP\src\CMakeLists.txt`
+3. Select `Build > Build All`
+4. Open a file `vds_template_#`
+3. Select `Debug > Start Debugging` or `Debug > Start Without Debugging`
+
+or use the ps1 scripts (but these don't offer any debugging tools)
+
 ## Setup (Linux)
 NOTE: This folder `Template_CPP` will be your project root folder
 
 1. Install the Vicon DataStream SDK
 	- Download the Vicon DataStream SDK
 	- From the Linux64 Dir, extract `ViconDataStreamSDK_1.11.0.128037h__Linux64.zip`
-	- Place the extracted files into `Template_CPP/lib_ubuntu`
+	- Place the extracted files into `Template_CPP/lib_ubuntu/vds`
 
 2. Configure `~./bashrc` to run the helper scripts
 	- Follow the setup and activate instructions in `Template_CPP/scripts/VDSI_bashrc_append.sh`
 
 3. Configure the root CMake file `Template_CPP/src/CMakeLists.txt`
-	- Change the lines
-		- `if("${HOSTNAME_THIS_PC}" STREQUAL "acrv-All-Series")`
-		- `set(BJ_PROJECT_DIR "/path_to_project_root")`
-	- To
-		- Replace `acrv-All-Series` with the hostname of the computer you're installing this on
-		- Replace `/path_to_project_root` with the absolute path to this folder `Template_CPP`
+	- If necessary, change the variables to reflect your install paths
+		- `VICONDS_LIB_DIR` is the path to the `.so` files in the CPP directory
+		- `VICONDS_INC_DIR` is the path to the `.h` files in the CPP directory
 
 4. Configure the example files `Template_CPP/src/vicon_template/vds_template_#.cpp`
 	- Change the lines
@@ -39,9 +64,9 @@ NOTE: This folder `Template_CPP` will be your project root folder
 
 
 ## Getting Started with Modifications
-Read `VDS_Interface.h` to see what else it can do and add more functionality as you require
+Read the descriptions of the interfaces in `VDS_Interface.h` to see what else it can do and add more functionality as you require
 
-Alter this file to use a maths library that can work with matrices (I use the Armadillo C++ Library)
+Alter the class `vdsi::Point` to use a maths library that can work with matrices (I use the Armadillo C++ Library)
 
 ## Troubleshooting
 The C++ version of Vicon DataStream SDK has issues with compatibility with most other C++ libraries.
