@@ -4,6 +4,8 @@ These instructions assume that you are running `MATLAB 2021b` or later on Window
 
 ## Setup
 1. Install the Vicon DataStream SDK
+	- Download the Vicon DataStream SDK
+	- Run the Win64 installer
 	- The install path should place the `dotNET` files on the path `C:\Program Files\Vicon\DataStream SDK\Win64\dotNET`
 	- If this is not the path, then modify the `addpath` command in the template file `VDSInterface.m` to match
 
