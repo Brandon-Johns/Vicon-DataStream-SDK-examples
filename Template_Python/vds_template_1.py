@@ -6,14 +6,14 @@ from __future__ import print_function
 from vicon_dssdk import ViconDataStream
 
 # Program configuration
-HostName = "localhost:801"
+hostName = "localhost:801"
 
 # Initialise
 client = ViconDataStream.Client()
 try:
-    client.Connect( HostName )
+    client.Connect( hostName )
 except:
-    raise Exception("ERROR_VDS: Failed to connect to " + HostName)
+    raise Exception("ERROR_VDS: Failed to connect to " + hostName)
 client.EnableSegmentData()
 client.SetBufferSize( 1 )
 client.SetStreamMode( ViconDataStream.Client.StreamMode.EServerPush )
@@ -34,7 +34,7 @@ for subjectName in subjectNames:
 
     segmentNames = client.GetSegmentNames( subjectName )
     segmentName = segmentNames[0]
-    if length(segmentNames)!=1: raise Exception("ERROR_VDS: Invalid assumption that segment count is 1")
+    if len(segmentNames)!=1: raise Exception("ERROR_VDS: Invalid assumption that segment count is 1")
 
     print( 'Translation', client.GetSegmentGlobalTranslation( subjectName, segmentName ) )
     print( 'Rotation Matrix', client.GetSegmentGlobalRotationMatrix( subjectName, segmentName ) )
