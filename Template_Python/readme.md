@@ -10,7 +10,7 @@ These instructions assume that you are running on Windows
 	- Download the Vicon DataStream SDK
 	- Run the Win64 installer
 	- The install path should place a script at `C:\Program Files\Vicon\DataStream SDK\Win64\Python\install_vicon_dssdk.bat`
-	- Open a python cmd.exe prompt run this file (it will execute a `pip install` command)
+	- Open a python command prompt run this file (it will execute a `pip install` command)
 
 2. If the computer you are working on is not the Vicon Control Computer, then
 	- In the each `vds_template_#.m` file, change the line `hostName = 'localhost:801'` so that `hostName` is equal to the IP address of the Vicon Control Computer (specified as a string)
@@ -22,6 +22,8 @@ In a Python IDE, run any of the files
 or in powershell/cmd, run
 -	`python vds_template_#.py`
 
-
+## About this template
+This template is currently very umm... minimal....
+Suggested to implement multithreading as in the C++ template and data storage as in the MATLAB template
 
 

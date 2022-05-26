@@ -2,6 +2,7 @@
 This repository contains instruction and template projects to use the Vicon DataStream SDK to stream 'object' positions and orientations from the software Vicon Tracker 3 to user written software in realtime.
 
 Each template has it's own instructions, in the readme file
+- [Python](./Template_Python/readme.md)
 - [Matlab](./Template_Matlab/readme.md)
 - [C++](./Template_CPP/readme.md) (Using CMake)
 - [ROS](./Template_ROS/readme.md) (Robot Operating System)
