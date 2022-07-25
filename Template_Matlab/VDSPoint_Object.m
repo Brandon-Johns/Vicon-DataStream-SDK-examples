@@ -1,7 +1,6 @@
 classdef VDSPoint_Object < VDSPoint
 properties (Access=private)
-    % Child points to this point
-    %   e.g. if the main point is a vicon 'Object', then the child is the markers
+    % Child markers of this point
     markers_(:,1) VDSPoint_Marker
 end
 methods

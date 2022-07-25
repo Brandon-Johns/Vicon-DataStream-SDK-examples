@@ -30,8 +30,8 @@ namespace
 {
 	// Vicon object names
 	// (add all your objects)
-	constexpr auto NAME_MyViconObject1 = "Jackle";
-	constexpr auto NAME_MyViconObject2 = "bj_c1_cwm";
+	constexpr auto NAME_MyViconObject1 = "Jackal";
+	constexpr auto NAME_MyViconObject2 = "bj_ctrl";
 	constexpr auto NAME_MyViconObject3 = "someOtherObject";
 }
 
@@ -80,9 +80,9 @@ int main( int argc, char* argv[] )
 	//******************************
 	while( true )
 	{
-		// Get new data frame from VDS
+		// Get data frame from VDS
 		// Re-encode data into Brandon's custom Points object
-		auto points = VDS.GetFrame_GetUnread();
+		auto points = VDS.GetFrame(); // Non-blocking => may return duplicate frame
 
 		// Print just the object that I specify (specify with the same name you use in Tracker
 		auto myPoint = points.Get(NAME_MyViconObject1);

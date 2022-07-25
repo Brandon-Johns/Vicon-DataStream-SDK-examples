@@ -70,7 +70,7 @@ if(WIN32)
 	set(VICONDS_INC_DIR "C:/Program Files/Vicon/DataStream SDK/Win64/CPP" CACHE PATH "dir vicon h")
 
 # Linux: All installs should look the same if VDS is installed per the instructions
-else
+else()
 	# VDS
 	set(VICONDS_LIB_DIR "${PROJECT_DIR}/lib_ubuntu/vds" CACHE PATH "dir vicon lib")
 	set(VICONDS_INC_DIR "${PROJECT_DIR}/lib_ubuntu/vds" CACHE PATH "dir vicon h")

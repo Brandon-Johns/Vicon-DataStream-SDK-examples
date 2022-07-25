@@ -97,6 +97,82 @@ namespace vdsi
 		}
 	};
 
+	class Point_Marker : public Point
+	{
+	public:
+		//********************************************************************************
+		// Interface: Create
+		//****************************************
+		// INPUT: (see variable defs)
+		Point_Marker(
+			std::string name_in,
+			std::vector<double> P_in = std::vector<double>(3, nan("")),
+			bool occluded_in = true
+		) :
+			Point(
+				name_in,
+				std::vector<double>(9, nan("")),
+				P_in,
+				occluded_in)
+		{
+			// Nothing to do
+		}
+	};
+
+	class Point_Object : public Point
+	{
+	public:
+		// Child markers of this point
+		std::vector<vdsi::Point_Marker> markers;
+
+		//********************************************************************************
+		// Interface: Create
+		//****************************************
+		// INPUT: (see variable defs)
+		Point_Object(
+			std::string name_in,
+			std::vector<double> R_in = std::vector<double>(9, nan("")),
+			std::vector<double> P_in = std::vector<double>(3, nan("")),
+			bool occluded_in = true
+		) :
+			Point(
+				name_in,
+				R_in,
+				P_in,
+				occluded_in)
+		{
+			// Nothing to do
+		}
+
+		//********************************************************************************
+		// Interface: Set
+		//****************************************
+		// INPUT: Point_Marker
+		void AddMarker(vdsi::Point_Marker marker)
+		{
+			// Save point
+			this->markers.push_back(marker);
+		}
+
+		//********************************************************************************
+		// Interface: Get
+		//****************************************
+		// INPUT: Marker name
+		// OUTPUT: Copy of the found Marker
+		vdsi::Point_Marker Get(std::string name)
+		{
+			for (auto&& marker : this->markers)
+			{
+				// Return copy of point upon finding
+				if (marker.viconObjectName == name) { return vdsi::Point_Marker(marker); }
+			}
+
+			// No point found => return occluded
+			return vdsi::Point_Marker(name);
+		}
+
+	};
+
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// Manages points of the Point class - storage, retrieval by name
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -104,13 +180,15 @@ namespace vdsi
 	{
 	public:
 		// Vector of Point objects
-		std::vector<vdsi::Point> all;
+		// VDS Frame number (incremental counter)
+		std::vector<vdsi::Point_Object> all;
+		unsigned int frameNumber = 0;
 
 		//********************************************************************************
 		// Interface: Set
 		//****************************************
-		// INPUT: shared_prt to Point
-		void AddPoint(vdsi::Point point)
+		// INPUT: Point
+		void AddPoint(vdsi::Point_Object point)
 		{
 			// Save point
 			this->all.push_back(point);
@@ -121,16 +199,16 @@ namespace vdsi
 		//****************************************
 		// INPUT: Point name
 		// OUTPUT: Copy of the found point
-		vdsi::Point Get(std::string name)
+		vdsi::Point_Object Get(std::string name)
 		{
 			for(auto&& point : this->all)
 			{
 				// Return copy of point upon finding
-				if (point.viconObjectName == name) { return vdsi::Point(point); }
+				if (point.viconObjectName == name) { return vdsi::Point_Object(point); }
 			}
 
 			// No point found => return occluded
-			return vdsi::Point(name);
+			return vdsi::Point_Object(name);
 		}
 	};
 
@@ -191,10 +269,12 @@ namespace vdsi
 			bool lightweightResult = EnableLightweight ? this->Client.EnableLightweightSegmentData().Result != vds::Result::Success : true;
 			bool streamModeResult = this->Client.SetStreamMode( vds::StreamMode::ServerPush ).Result == vds::Result::Success;
 			bool segmentDataResult = this->Client.EnableSegmentData().Result == vds::Result::Success;
+			bool markerDataResult = this->Client.EnableMarkerData().Result == vds::Result::Success;
 			bool wasSuccessful =
 				   lightweightResult
 				&& streamModeResult
-				&& segmentDataResult;
+				&& segmentDataResult
+				&& markerDataResult;
 			if( !wasSuccessful ) { throw std::runtime_error("ERROR_VDS: Failed to initialise"); }
 
 			// Start thread to listen for data
@@ -290,7 +370,12 @@ namespace vdsi
 			}
 
 			// Block until thread signals ready
-			while( ! this->IsFrameReady ) { std::this_thread::sleep_for(std::chrono::microseconds(1)); }
+			//	NOTE:
+			//		The following does not work (On Windows at least, it sleeps way longer than it should)
+			//		std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+			//		==> Instead, use a no-op
+			//		((void)0);
+			while (!this->IsFrameReady) { ((void)0); }
 
 			// This statement is written very specifically to invoke the copy contructor of vdsi::Points
 			// See syntax differences to call copy constructor VS operator=
@@ -339,6 +424,7 @@ namespace vdsi
 		{
 			// Object to return
 			vdsi::Points Points;
+			Points.frameNumber = Client.GetFrameNumber().FrameNumber;
 
 			// Loop over all subjects
 			unsigned int numS = this->Client.GetSubjectCount().SubjectCount;
@@ -392,8 +478,36 @@ namespace vdsi
 					);
 
 				// Save point to the return object if allowed by filters
-				vdsi::Point point(SubjectName, R, P, IsOccluded);
-				if(this->AllowedByFilters(point)) { Points.AddPoint(point); }
+				vdsi::Point_Object point(SubjectName, R, P, IsOccluded);
+				if ( ! this->AllowedByFilters(point) ) { continue; }
+
+				// Markers
+				unsigned int numM = this->Client.GetMarkerCount(SubjectName).MarkerCount;
+				for (unsigned int idxMarker = 0; idxMarker < numM; ++idxMarker)
+				{
+					// Maker name and global translation
+					std::string MarkerName = this->Client.GetMarkerName(SubjectName, idxMarker).MarkerName;
+					vds::Output_GetMarkerGlobalTranslation retM_P = this->Client.GetMarkerGlobalTranslation(SubjectName, MarkerName);
+					std::vector<double> MarkerP(std::begin(retM_P.Translation), std::end(retM_P.Translation));
+					bool marker_IsOccluded = retM_P.Occluded;
+
+					// Save marker to object
+					//	Marker arrays should stay same size for a given object, otherwise access would be painful
+					//	Let's trust that VDS always specifies them in the same order...
+					vdsi::Point_Marker marker(MarkerName, P, marker_IsOccluded);
+					if (!marker_IsOccluded)
+					{
+						point.AddMarker(marker);
+					}
+					else
+					{
+						// Create occluded
+						point.AddMarker(vdsi::Point_Marker(MarkerName));
+					}
+				}
+
+				Points.AddPoint(point);
+
 			}
 			
 			// Apply AllowedObjects filter if enabled
@@ -404,7 +518,7 @@ namespace vdsi
 		// Helper functions
 		//****************************************
 		// PURPOSE: Test if the point is alloed by the currently active filters
-		bool AllowedByFilters(const vdsi::Point& point)
+		bool AllowedByFilters(const vdsi::Point_Object& point)
 		{
 			// Occluded filter
 			if(this->IsOccludedFilterActive && point.IsOccluded) {return false;}
@@ -426,9 +540,10 @@ namespace vdsi
 			if( ! this->IsObjectFilterActive ) {return Points; }
 
 			vdsi::Points Points_sorted;
+			Points_sorted.frameNumber = Points.frameNumber;
 			for(auto&& allowedObject_name : this->filter_AllowedObjects)
 			{
-				vdsi::Point point = Points.Get(allowedObject_name);
+				vdsi::Point_Object point = Points.Get(allowedObject_name);
 
 				// Save point to the return object if allowed by filters
 				//	i.e. apply occluded filter
