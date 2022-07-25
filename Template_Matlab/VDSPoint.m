@@ -7,7 +7,7 @@ properties (Access=private)
 
     % Rotation matrix in vicon global frame
     % Position in vicon global frame
-    R_(3,3)
+    R_(3,3) double
     x_(1,1) double
     y_(1,1) double
     z_(1,1) double
@@ -135,12 +135,12 @@ methods
         notFoundIdx = isnan(pointIdx);
 
         % Filter not found points per options
-        pointObject = VDSPoint.empty;
+        pointObject = this.empty;
         if keepNotFound=="keepNotFound"
             for idx = 1 : length(pointIdx)
                 if notFoundIdx(idx)
                     % Create not found points as occluded
-                    pointObject = [ pointObject, VDSPoint( nameIn(idx) ) ];
+                    pointObject = [ pointObject, this.new( nameIn(idx) ) ];
                 else
                     pointObject = [ pointObject, this( pointIdx(idx) ) ];
                 end
@@ -170,7 +170,8 @@ methods (Access=private)
             end
         end
     end
-
+end
+methods (Access=protected)
     % Helper to allow using functions with an array of objects
     % Only intended for use on scalar properties. Place vector properties in a cell array
     % Input: List of properties

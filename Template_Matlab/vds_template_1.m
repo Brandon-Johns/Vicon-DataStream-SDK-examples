@@ -1,11 +1,8 @@
 %{
 Written By: Brandon Johns
 Date Version Created: 2022-04-21
-Date Last Edited: 2022-04-29
+Date Last Edited: 2022-07-25
 Status: functional
-Dependencies:
-    VDSInterface.m
-    VDSPoint.m
 
 %%% PURPOSE %%%
 Example for using Brandon's interface to the "Vicon DataStream SDK"
@@ -37,7 +34,8 @@ frameNumber = frameInfo.frameNumber % [Count]
 latency = frameInfo.latency %         [Seconds]
 
 % Get info about specific objects (Use the names of the objects as specified in Vicon Tracker)
-myObjects = points.GetByName(["Jackle", "Pedestrian"]);
+%myObjects = points.GetByName(["Jackle", "Pedestrian"]);
+myObjects = points
 
 % Optionally filter out occluded points
 %myObjects = myObjects.GetIfNotOccluded;
@@ -64,6 +62,12 @@ euler = myObjects.euler
 % Transformation matrix [position in mm]
 T = myObjects.T{:}
 
+% List Markers
+for object = myObjects
+    Markers = table(object.Markers.P{:}, 'variableNames', object.Markers.Name.', 'rowNames',["x","y","z"])
+end
+
+return
 
 figure
 hold on

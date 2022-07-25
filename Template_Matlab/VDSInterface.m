@@ -43,6 +43,7 @@ methods
 
         % Enable client options
         this.vdsClient.EnableSegmentData();
+        this.vdsClient.EnableMarkerData();
 
         if this.lightWeightMode
             ret = this.vdsClient.EnableLightweightSegmentData;
@@ -72,7 +73,7 @@ methods
 
     function [points, frameInfo] = GetFrame(this)
         % Return array
-        points = VDSPoint.empty;
+        points = VDSPoint_Object.empty;
         frameInfo = struct('frameRate',nan, 'frameNumber',nan, 'latency',nan);
 
         % Get next frame from DataStream
@@ -114,14 +115,35 @@ methods
             R_rowMajor = double(retR.Rotation);
             R = [ R_rowMajor(1:3); R_rowMajor(4:6); R_rowMajor(7:9) ];
 
-            % Test if object is occluded
-            isOccluded = retP.Occluded || retR.Occluded;
-            
-            % Append to list of points
             % Ignore occluded points. They'll be added back on calls to VDSPoint.GetByName()
-            if ~isOccluded
-                points = [ points, VDSPoint(SubjectName, R, P) ];
+            isOccluded = retP.Occluded || retR.Occluded;
+            if isOccluded; continue; end
+
+            % Markers
+            %   Casting uint32->int32 for special case of empty array
+            MarkerCount = this.vdsClient.GetMarkerCount( SubjectName ).MarkerCount;
+            Markers = VDSPoint_Marker.empty;
+            for MarkerIndex_int32 = 0 : int32(MarkerCount) - 1
+                MarkerIndex = uint32(MarkerIndex_int32);
+
+                % Maker name and global translation
+                MarkerName = this.vdsClient.GetMarkerName( SubjectName, MarkerIndex ).MarkerName;
+                retP = this.vdsClient.GetMarkerGlobalTranslation( SubjectName, MarkerName );
+                MarkerP = double(retP.Translation);
+
+                % Save marker to object
+                % Marker arrays should stay same size for a given object, otherwise access would be painful
+                % Let's trust that VDS always specifies them in the same order...
+                if ~retP.Occluded
+                    Markers = [Markers, VDSPoint_Marker(MarkerName, MarkerP)];
+                else
+                    % Create occluded
+                    Markers = [Markers, VDSPoint_Marker(MarkerName)];
+                end
             end
+
+            % Append to list of points
+            points = [ points, VDSPoint_Object(SubjectName, R, P).AppendMarkers(Markers) ];
         end
 
         % Apply filters

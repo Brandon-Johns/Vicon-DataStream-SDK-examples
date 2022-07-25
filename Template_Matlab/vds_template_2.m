@@ -3,9 +3,6 @@ Written By: Brandon Johns
 Date Version Created: 2022-04-14
 Date Last Edited: 2022-04-29
 Status: functional
-Dependencies:
-    VDSInterface.m
-    VDSPoint.m
 
 %%% PURPOSE %%%
 Example for using Brandon's interface to the "Vicon DataStream SDK"

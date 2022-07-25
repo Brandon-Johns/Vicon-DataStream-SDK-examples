@@ -76,3 +76,16 @@ RobotPose = points.GetByName("Robot");
 HumanPose = points.GetByName("Human");
 ```
 
+Locations of the markers taht make up each object can be read with
+```MATLAB
+% It is safe to read the markers of multiple instances of the same vicon object (i.e. captured at different times) simultaniously
+% but not of different vicon objects
+for point = points
+	point.Markers.Name
+	point.IsOccluded
+	point.Markers.x
+	point.Markers.y
+	point.Markers.z
+	point.Markers.P
+end
+```
