@@ -77,7 +77,7 @@ int main( int argc, char* argv[] )
 	// The input estimate number of rows is not strict, you can go over, but performance will suffer
 	// as memory will have to be reallocated.
 	// Assuming VDS operates at 100 fps, a 10 second trail gives 10000 frames
-	csv_exporter::ExportCSV ExportCSV(10000);
+	csv_exporter::ExportCSV ExportCSV(10);
 
 	// First row (header row) of the CSV
 	csv_exporter::Export_CSV_RowBuilder<std::string> HeaderBuilder;
@@ -136,10 +136,10 @@ int main( int argc, char* argv[] )
 		}
 		ExportCSV.AddRow(RowBuilder.Row);
 
+		// Print data into a file
+		// Print incrementally, during the loop
+		ExportCSV.PrintAll_clear(*outData);
 	}
-
-	// Print data into a file
-	ExportCSV.printAll(*outData);
 
 	VDS.Disconnect();
 	return 0;

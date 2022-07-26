@@ -43,7 +43,7 @@ namespace csv_exporter
 		bool rowLength_IsSet = false;
 
 		// CSV header & data rows
-		std::vector<std::string> headerRow;
+		std::vector< std::vector<std::string> > headerRows;
 		std::vector< std::vector<double> > dataRows;
 
 		// Enforces the strict requirement that each row of the CSV must be exactly this length
@@ -82,7 +82,7 @@ namespace csv_exporter
 		void AddHeadder(std::vector<std::string> row)
 		{
 			this->ValidateRowLength(row.size());
-			this->headerRow = row;
+			this->headerRows.push_back( row );
 		}
 
 		// Append a data row to the CSV
@@ -96,14 +96,17 @@ namespace csv_exporter
 		// Interface: output
 		//****************************************
 		// Print all currently held data in CSV format
-		void printAll(std::ostream& outStream)
+		void PrintAll(std::ostream& outStream)
 		{
 			// Print head
-			for (auto& value : this->headerRow)
+			for (auto& row : this->headerRows)
 			{
-				outStream << value << ",";
+				for (auto& value : row)
+				{
+					outStream << value << ",";
+				}
+				outStream << std::endl;
 			}
-			outStream << std::endl;
 
 			// Print rows
 			for (auto& row : this->dataRows)
@@ -114,6 +117,15 @@ namespace csv_exporter
 				}
 				outStream << std::endl;
 			}
+		}
+
+		// Print currently held data, then clear held data
+		// Allows incremental printing of data to a csv
+		void PrintAll_clear(std::ostream& outStream)
+		{
+			PrintAll(outStream);
+			this->headerRows.clear();
+			this->dataRows.clear();
 		}
 
 	};

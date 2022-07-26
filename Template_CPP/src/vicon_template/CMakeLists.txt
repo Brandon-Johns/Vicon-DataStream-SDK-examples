@@ -28,7 +28,7 @@ set(INCLUDES_LOCAL_DIR
 # cpp files containing main()
 #	set(Sources <exe1> [exe2] ...)
 # cpp files not containing main()
-set(Sources "vds_template_1" "vds_template_2" "vds_template_3")
+set(Sources "vds_template_1" "vds_template_2" "vds_template_3" "vds_template_4")
 set(BJ_Dependencies )
 
 

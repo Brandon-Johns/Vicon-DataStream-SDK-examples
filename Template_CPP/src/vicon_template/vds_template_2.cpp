@@ -120,10 +120,17 @@ int main( int argc, char* argv[] )
 		}
 		ExportCSV.AddRow(RowBuilder.Row);
 
+
+		// Print data into a file
+		// Print incrementally, during the loop
+		ExportCSV.PrintAll_clear(*outData);
 	}
 
-	// Print data into a file
-	ExportCSV.printAll(*outData);
+	// (NO USED) Print data into a file at once
+	//	In general, printing slows program execution creating risk of not being able to print as fast as data is gathered,
+	//	but at 200Hz (Vicon frame rate), this is not a problem
+	//	=> it is better to print data incrementally
+	//ExportCSV.PrintAll(*outData);
 
 	VDS.Disconnect();
 	return 0;

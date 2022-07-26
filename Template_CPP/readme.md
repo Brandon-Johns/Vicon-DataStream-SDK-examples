@@ -29,7 +29,21 @@ I wrote this to be friendly if it's your first CMake project
 4. Open a file `vds_template_#`
 3. Select `Debug > Start Debugging` or `Debug > Start Without Debugging`
 
-or use the ps1 scripts (but these don't offer any debugging tools)
+or use the ps1 scripts
+- I suggest using the powershell script for running if using command line arguments
+- but build with visual studio GUI because they don't offer any debugging tools
+
+Example use with powershell
+```Powershell
+# Example Use with powershell
+cd Template_CPP
+mkdir 'output'
+cd output
+
+# Run the exe through the helper script
+# The output file will be created in the current directory (i.e. "Template_CPP\output")
+..\scripts\VDSI_runExe.ps1 vds_template_4 --FileName tmp --Objects Jackal bj_ctrl --DurationSeconds 10  --SaveMarkerLocations
+```
 
 ## Setup (Linux)
 NOTE: This folder `Template_CPP` will be your project root folder

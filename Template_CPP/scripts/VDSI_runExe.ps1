@@ -1,7 +1,7 @@
 # Lang: Powershell
 # Written by:		Brandon Johns
 # Version created:	2022-04-28
-# Last edited:		2022-04-28
+# Last edited:		2022-07-26
 
 # Purpose: Find DLLs and run binary
 
@@ -12,7 +12,8 @@
 # Script input
 ################################
 param (
-	[Parameter(Mandatory=$true,ValueFromPipeline=$false)][string]$exeName
+	[Parameter(Mandatory=$true,  ValueFromPipeline=$false, Position=0)][string]$exeName,
+	[Parameter(Mandatory=$false, ValueFromPipeline=$false, Position=1, ValueFromRemainingArguments)][string[]]$exeArgs
 )
 # INPUT:
 #	exeName = path to / name of exe
@@ -26,6 +27,8 @@ param (
 # Path to Vicon DataStream SDK
 $VDS_LibRoot = 'C:\Program Files\Vicon\DataStream SDK\Win64\CPP'
 
+# Relative path from this script to the binary
+$VDS_RelS2C = "../bin"
 
 ################################################################
 # Automated
@@ -33,8 +36,10 @@ $VDS_LibRoot = 'C:\Program Files\Vicon\DataStream SDK\Win64\CPP'
 # Find exe
 if ( -not $exeName.EndsWith(".exe") ) { $exeName += ".exe" }
 
-if    ( Test-Path $exeName                      -PathType "Leaf" ) { $exePath = $exeName }
-elseif( Test-Path (Join-Path "../bin" $exeName) -PathType "Leaf" ) { $exePath = (Join-Path "../bin" $exeName) }
+$tmpPath = (Join-Path $PSScriptRoot $VDS_RelS2C | Join-Path -ChildPath $exeName)
+
+if    ( Test-Path $exeName -PathType "Leaf" ) { $exePath = $exeName }
+elseif( Test-Path $tmpPath -PathType "Leaf" ) { $exePath = $tmpPath }
 else { throw "input file not found" }
 $exePath = Resolve-Path($exePath)
 
@@ -50,6 +55,6 @@ $DLL_Directories | ForEach-Object {
 
 # Run exe
 #	NOTE: "Start-Process $exePath -NoNewWindow -Wait" is no good because the process is detached => hard to capture output
-& $exePath
+& $exePath $exeArgs
 
 
