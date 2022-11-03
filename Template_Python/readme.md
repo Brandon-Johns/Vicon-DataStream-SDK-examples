@@ -9,8 +9,13 @@ These instructions assume that you are running on Windows
 2. Install the Vicon DataStream SDK
 	- Download the Vicon DataStream SDK
 	- Run the Win64 installer
-	- The install path should place a script at `C:\Program Files\Vicon\DataStream SDK\Win64\Python\install_vicon_dssdk.bat`
-	- Open a python command prompt run this file (it will execute a `pip install` command)
+	- Try
+		- The install path should place a script at `C:\Program Files\Vicon\DataStream SDK\Win64\Python\install_vicon_dssdk.bat`
+		- Open a command prompt run this file (it will execute a `pip install` command)
+	- or if using Pycharm
+		- Open an admin powershell at the project directory root and run
+		- `.\venv\Scripts\activate.ps1`
+		- `pip install "C:\Program Files\Vicon\DataStream SDK\Win64\Python\vicon_dssdk"`
 
 2. If the computer you are working on is not the Vicon Control Computer, then
 	- In the each `vds_template_#.m` file, change the line `hostName = 'localhost:801'` so that `hostName` is equal to the IP address of the Vicon Control Computer (specified as a string)
