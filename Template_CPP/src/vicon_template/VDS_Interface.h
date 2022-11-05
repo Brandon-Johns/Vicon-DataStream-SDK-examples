@@ -42,7 +42,7 @@ namespace vds = ViconDataStreamSDK::CPP;
 namespace vdsi
 {
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// Stores the position and rotaion of vicon objects
+	// Stores the position and rotation of vicon objects
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// I suggest editing this to use the Armadillo C++ Maths library,
 	// but to keep it simple for the template, I use std::vector
@@ -232,7 +232,7 @@ namespace vdsi
 		// Internal state control
 		std::unique_ptr<std::thread> UpdateThread;
 		std::atomic<bool> IsConnected = false;
-		std::atomic<bool> IsKillReqest = false;
+		std::atomic<bool> IsKillRequest = false;
 		std::atomic<bool> IsFrameReady = false;
 		std::atomic<bool> HasLatestFrameBeenRead = false;
 		vdsi::Points LatestFrame;
@@ -278,7 +278,7 @@ namespace vdsi
 			if( !wasSuccessful ) { throw std::runtime_error("ERROR_VDS: Failed to initialise"); }
 
 			// Start thread to listen for data
-			this->IsKillReqest = false;
+			this->IsKillRequest = false;
 			this->IsFrameReady = false;
 			this->HasLatestFrameBeenRead = false;
 			this->UpdateThread = std::make_unique<std::thread>( [this] { this->UpdateFrameInBackground(); });
@@ -293,13 +293,13 @@ namespace vdsi
 		// PURPOSE:
 		//	Close connection on the client side
 		//	Has no effect on the vicon control computer (tracker 3 will keep broadcasting)
-		//	Use to free up processing recources
+		//	Use to free up processing resources
 		void Disconnect()
 		{
 			if( ! this->IsConnected) { return; } // Nothing to do
 
 			// Set kill flag and wait for thread to finish it's last loop
-			this->IsKillReqest = true;
+			this->IsKillRequest = true;
 			this->UpdateThread->join();
 
 			this->Client.Disconnect();
@@ -326,9 +326,9 @@ namespace vdsi
 			this->IsFrameReady = false;
 		}
 
-		// PUTPOSE: Show all captured objects in the output
-		// PUTPOSE: Do not show occluded objects in the output
-		// PUTPOSE: Show all captured objects in the output
+		// PURPOSE: Show all captured objects in the output
+		// PURPOSE: Do not show occluded objects in the output
+		// PURPOSE: Show all captured objects in the output
 		void DisableObjectFilter()   { this->IsObjectFilterActive = false;   this->IsFrameReady = false; }
 		void EnableOccludedFilter()  { this->IsOccludedFilterActive = true;  this->IsFrameReady = false; }
 		void DisableOccludedFilter() { this->IsOccludedFilterActive = false; this->IsFrameReady = false;}
@@ -377,7 +377,7 @@ namespace vdsi
 			//		((void)0);
 			while (!this->IsFrameReady) { ((void)0); }
 
-			// This statement is written very specifically to invoke the copy contructor of vdsi::Points
+			// This statement is written very specifically to invoke the copy constructor of vdsi::Points
 			// See syntax differences to call copy constructor VS operator=
 			this->mtx_LatestFrame.lock();
 			auto LatestFrame_copy(this->LatestFrame);
@@ -394,7 +394,7 @@ namespace vdsi
 		// Runs in background to update the frame data
 		void UpdateFrameInBackground()
 		{
-			while( ! this->IsKillReqest )
+			while( ! this->IsKillRequest )
 			{
 				// Wait for next frame
 				auto UpdateResult = Client.GetFrame();
@@ -517,7 +517,7 @@ namespace vdsi
 		//********************************************************************************
 		// Helper functions
 		//****************************************
-		// PURPOSE: Test if the point is alloed by the currently active filters
+		// PURPOSE: Test if the point is allowed by the currently active filters
 		bool AllowedByFilters(const vdsi::Point_Object& point)
 		{
 			// Occluded filter

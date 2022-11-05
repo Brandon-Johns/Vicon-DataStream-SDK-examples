@@ -79,7 +79,7 @@ namespace csv_exporter
 		// Use the helper class Export_CSV_RowBuilder to generate the input to these methods
 
 		// Header: the first line of the CSV
-		void AddHeadder(std::vector<std::string> row)
+		void AddHeader(std::vector<std::string> row)
 		{
 			this->ValidateRowLength(row.size());
 			this->headerRows.push_back( row );

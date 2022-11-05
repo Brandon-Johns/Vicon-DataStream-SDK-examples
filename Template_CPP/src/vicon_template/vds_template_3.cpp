@@ -54,7 +54,7 @@ int main( int argc, char* argv[] )
 	constexpr auto vds_HostName = "192.168.11.3";
 
 	// List all the objects to be allowed through filtering
-	// Prevents ghosts of other peoples objects from interfereing with the output
+	// Prevents ghosts of other peoples objects from interfering with the output
 	std::vector<std::string> AllowedObjectsList;
 	AllowedObjectsList.push_back(NAME_MyViconObject1);
 	AllowedObjectsList.push_back(NAME_MyViconObject2);
@@ -102,7 +102,7 @@ int main( int argc, char* argv[] )
 			HeaderBuilder.AddData(P_string_marker);
 		}
 	}
-	ExportCSV.AddHeadder(HeaderBuilder.Row);
+	ExportCSV.AddHeader(HeaderBuilder.Row);
 
 	//************************************************************
 	// Run

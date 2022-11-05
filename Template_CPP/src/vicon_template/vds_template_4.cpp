@@ -105,7 +105,7 @@ namespace
 			throw(std::invalid_argument("ERROR: (Bad Input) " + flagName));
 		}
 
-		// Correct reversal of args lsit
+		// Correct reversal of args list
 		std::reverse(argsOfFlag.begin(), argsOfFlag.end());
 
 		return argsOfFlag;
@@ -126,7 +126,7 @@ int main( int argc, char* argv[] )
 	std::string vds_HostName = "192.168.11.3";
 
 	// List all the objects to be allowed through filtering
-	// Prevents ghosts of other peoples objects from interfereing with the output
+	// Prevents ghosts of other peoples objects from interfering with the output
 	std::vector<std::string> AllowedObjectsList;
 
 	// (See description in arguments)
@@ -151,10 +151,10 @@ int main( int argc, char* argv[] )
 				"    Filename to direct to output to. Without extension or path\n"
 				"    Default: Print to terminal\n"
 				"--HostName\n"
-				"    IP adress or hostname of computer running Vicon Tracker\n"
+				"    IP address or hostname of computer running Vicon Tracker\n"
 				"    Default: "+vds_HostName+"\n"
 				"--Objects\n"
-				"    Space separated lsit of vicon objects\n"
+				"    Space separated list of vicon objects\n"
 				"    Default: (empty)\n"
 				"--SaveMarkerLocations\n"
 				"    Marker positions are exported in addition to object pose\n"
@@ -260,7 +260,7 @@ int main( int argc, char* argv[] )
 			}
 		}
 	}
-	ExportCSV.AddHeadder(HeaderBuilder.Row);
+	ExportCSV.AddHeader(HeaderBuilder.Row);
 
 	// Duration of trial, in frame count
 	uint32_t durationFrames = uint32_t( durationSeconds * VDS.GetFrameRate() );

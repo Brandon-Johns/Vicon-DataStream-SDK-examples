@@ -6,7 +6,7 @@ end
 methods
     % Constructor
     function this = VDSPoint_Object(varargin)
-        this = this@VDSPoint(varargin{:})
+        this = this@VDSPoint(varargin{:});
     end
 
     %********************************************************************************************************
@@ -49,7 +49,7 @@ methods
 end
 methods (Static)
     % Create new object of this class
-    %   Use when class sype is not known e.g. array(end+1)=this.new()
+    %   Use when class type is not known e.g. array(end+1)=this.new()
     function out = new(varargin)
         out = VDSPoint_Object(varargin{:});
     end

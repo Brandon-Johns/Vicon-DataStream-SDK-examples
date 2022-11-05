@@ -27,7 +27,7 @@ clc
 %****************************************************
 runDuration = 1; % [seconds]
 
-%myObjectNames = ["Jackle", "Pedestrian"];
+%myObjectNames = ["Jackal", "Pedestrian"];
 myObjectNames = ["bj_ctrl", "arm"];
 
 fileNameOut = "tmp4.xlsx";

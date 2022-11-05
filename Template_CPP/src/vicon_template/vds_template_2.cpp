@@ -52,7 +52,7 @@ int main( int argc, char* argv[] )
 	constexpr auto vds_HostName = "192.168.11.3";
 
 	// List all the objects to be allowed through filtering
-	// Prevents ghosts of other peoples objects from interfereing with the output
+	// Prevents ghosts of other peoples objects from interfering with the output
 	std::vector<std::string> AllowedObjectsList;
 	AllowedObjectsList.push_back(NAME_MyViconObject1);
 	AllowedObjectsList.push_back(NAME_MyViconObject2);
@@ -90,7 +90,7 @@ int main( int argc, char* argv[] )
 		for(auto& str : RP_string_point) { str = object + "_" + str; };
 		HeaderBuilder.AddData(RP_string_point);
 	}
-	ExportCSV.AddHeadder(HeaderBuilder.Row);
+	ExportCSV.AddHeader(HeaderBuilder.Row);
 
 	//************************************************************
 	// Run
@@ -102,7 +102,7 @@ int main( int argc, char* argv[] )
 	{
 		// Get new data frame from VDS
 		// Re-encode data into Brandon's custom Points object
-		auto points = VDS.GetFrame_GetUnread(); // Blocking => Always returns a new/unread frame, but may havbe to wait for it
+		auto points = VDS.GetFrame_GetUnread(); // Blocking => Always returns a new/unread frame, but may have to wait for it
 
 		// Encode the next row of the CSV
 		//	The order will match the order in AllowedObjectsList

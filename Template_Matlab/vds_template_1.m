@@ -34,7 +34,7 @@ frameNumber = frameInfo.frameNumber % [Count]
 latency = frameInfo.latency %         [Seconds]
 
 % Get info about specific objects (Use the names of the objects as specified in Vicon Tracker)
-%myObjects = points.GetByName(["Jackle", "Pedestrian"]);
+%myObjects = points.GetByName(["Jackal", "Pedestrian"]);
 myObjects = points
 
 % Optionally filter out occluded points
@@ -72,7 +72,7 @@ return
 figure
 hold on
 plotTransforms([0,0,0], [1,0,0,0])
-plotTransforms(points.GetByName("Jackle").P{1}.'/1000, points.GetByName("Jackle").quat{1})
+plotTransforms(points.GetByName("Jackal").P{1}.'/1000, points.GetByName("Jackal").quat{1})
 xlabel("x (m)")
 xlabel("y (m)")
 xlabel("z (m)")
