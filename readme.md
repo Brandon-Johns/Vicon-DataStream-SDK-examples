@@ -13,6 +13,38 @@ Related Software
 - [Vicon DataStream SDK](https://www.vicon.com/software/datastream-sdk/)
 	- This project was written for Version `1.11.0`. Past or future versions may not function the same.
 
+## Software Architecture
+Each folder contains a stand alone template project. The categories are:
+
+### Minimal
+Simple single file projects to demonstrate receiving and printing frame data
+
+To use the minimal projects, follow the same setup instructions as in the template projects. Then follow the Vicon DataStream SDK Developers Guide to understand how to use the client
+
+### Template
+Provides a interface class [that wraps the SDK](https://en.wikipedia.org/wiki/Wrapper_function) as well as examples on how to use the wrapper class.
+
+Features:
+- Instead of SetStreamMode, my interfaces retrieve and cache frames in a background thread, while providing 3 modes of retrieval
+	- <code>GetFrame</code>
+		- Instantly returns the latest cached frame. Will return the same frame again if called before a new frame arrives
+		- Use when the call must not block
+		- e.g. need to receive frames while also sending commands to a robot at a higher frequency
+	- <code>GetFrame_GetUnread</code>
+		- If the cached frame has not yet been read, returns instantly. Otherwise blocks until a new frame arrives
+		- Use when blocking is acceptable, but duplicate frames are not
+		- e.g. a simple program to receive and write every frame to excel
+	- <code>GetFrame_WaitForNew</code>
+		- Blocks until a new frame arrives regardless of caching
+		- Use to ensure minimal delay between receiving a frame to using its values
+		- e.g. Synchronise frame data with reading other sensors
+- Data is encoded in objects that can be managed easier while seamlessly handling calls to retrieve data from occluded objects
+- Fixes bugs in the bare SDK e.g.
+	- Stream mode 'ClientPullPreFetch' blocks when called twice in the same frame interval
+	- Subject filtering only causes frames to be marked as occluded. They are still listed
+	- (C++) Occluded frames are incorrectly flagged as not occluded
+
+
 ## Prerequisite Setup
 **Vicon Control Computer**
 (The computer that is connected to the vicon cameras)
