@@ -41,18 +41,19 @@ if __name__ == "__main__":
     print('Frame Age (now - FrameTime) [s]:', frame.FrameAge_seconds())
 
     # Get every object (return type: list of points)
-    print('Every Object:                   ', end='')
+    print('Every Object:     ', end='')
     print([point.Name() for point in frame.All()], sep=', ')
 
     # Get every object that is visible in the current frame (return type: list of points)
-    print('Every Visible Object:           ', end='')
+    print('Visible Objects:  ', end='')
     print([point.Name() for point in frame.GetIfNotOccluded()], sep=', ')
 
     # Get specific objects (Use the names of the objects as specified in Vicon Tracker)
-    print('Every Specific Visible Objects: ', end='')
+    print('Specific Objects: ', end='')
     print([point.Name() for point in frame.GetByNames(['Jackal', 'Pedestrian'])], sep=', ')
 
     # Get a specific object
+    print()
     point = frame.GetByName('Jackal')
 
     # Name of object, as defined in Vicon Tracker

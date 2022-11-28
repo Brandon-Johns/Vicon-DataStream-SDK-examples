@@ -63,6 +63,7 @@ for idx in range(0, 3):
         print('Is Occluded:     ', isOccluded)
         print('Translation:     ', P)
         print('Rotation Matrix: ', R)
+    print()
 
 # ************************************************************
 # End

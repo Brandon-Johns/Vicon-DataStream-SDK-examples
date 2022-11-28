@@ -30,6 +30,21 @@ class Point:
                  Name:str,
                  R=numpy.array([nan,nan,nan,nan,nan,nan,nan,nan,nan]).reshape(3,3),
                  P=numpy.array([[nan,nan,nan]]).T):
+        # Input validation
+        if P.shape == (3,1):
+            # 2D column
+            pass
+        elif P.shape == (1,3):
+            # 2D row
+            P = P.transpose()
+        elif P.shape == (3,):
+            # 1D row
+            P = P.reshape(-1,1)
+        else:
+            raise Exception("ERROR_VDS: Invalid input: P")
+        if R.shape != (3,3):
+            raise Exception("ERROR_VDS: Invalid input: R")
+
         # The Name of the object in Vicon Tracker
         # Flag for if the object was not detected for this frame
         self._name = Name
@@ -64,6 +79,43 @@ class Point:
             P=-R_transpose @ self._P
         )
 
+    # Overloads
+    # Based on https://stackoverflow.com/a/3188723
+    # Matrix multiplication: result = this @ other
+    def __matmul__(self, other):
+        if isinstance(other, self.__class__):
+            result = self.T() @ other.T()
+            return Point(
+                Name=self.Name()+'_'+other.Name(),
+                R=result[0:3,0:3],
+                P=result[0:3,3]
+            )
+        else:
+            raise TypeError(f'ERROR_VDS: Invalid operation for operand @ between: {self.__class__} and {type(other)}')
+
+    # Matrix multiplication: this @= other
+    def __imatmul__(self, other):
+        if isinstance(other, self.__class__):
+            result = self.T() @ other.T()
+            return Point(
+                Name=self.Name()+'_'+other.Name(),
+                R=result[0:3,0:3],
+                P=result[0:3,3]
+            )
+        else:
+            raise TypeError(f'ERROR_VDS: Invalid operation for operand @ between: {self.__class__} and {type(other)}')
+
+    # Matrix multiplication: result = other @ this
+    def __rmatmul__(self, other):
+        if isinstance(other, self.__class__):
+            result = other.T() @ self.T()
+            return Point(
+                Name=self.Name()+'_'+other.Name(),
+                R=result[0:3,0:3],
+                P=result[0:3,3]
+            )
+        else:
+            raise TypeError(f'ERROR_VDS: Invalid operation for operand @ between: {self.__class__} and {type(other)}')
 
 class Frame:
     def __init__(self, frameNumber=nan, frameTime_seconds=nan):

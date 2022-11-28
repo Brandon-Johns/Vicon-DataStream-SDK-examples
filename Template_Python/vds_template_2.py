@@ -47,7 +47,7 @@ if __name__ == "__main__":
         print('Pedestrian (x,y,z) [mm]:', Pedestrian.P().transpose())
 
         if (not Jackal.IsOccluded()) and (not Pedestrian.IsOccluded()):
-            Position_JackalRelPedestrian = Pedestrian.Inv().T() @ Jackal.T()
-            print('Position of Jackal, relative to Pedestrian:', Position_JackalRelPedestrian.transpose())
+            Position_JackalRelPedestrian = Pedestrian.Inv() @ Jackal
+            print('Position of Jackal, relative to Pedestrian:', Position_JackalRelPedestrian.P().transpose())
 
     vdsi.Disconnect()

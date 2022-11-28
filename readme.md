@@ -1,7 +1,7 @@
 # Vicon DataStream SDK - Template Projects (Not Official)
 This repository contains instruction and template projects to use the Vicon DataStream SDK to stream 'object' positions and orientations from the software Vicon Tracker 3 to user written software in realtime.
 
-Each template has it's own instructions, in the readme file
+Each template has its own instructions, in the readme file
 - [Python](./Template_Python/readme.md)
 - [Matlab](./Template_Matlab/readme.md)
 - [C++](./Template_CPP/readme.md) (Using CMake)
@@ -14,7 +14,7 @@ Related Software
 	- This project was written for Version `1.11.0`. Past or future versions may not function the same.
 
 ## Software Architecture
-Each folder contains a stand alone template project. The categories are:
+Each folder contains a standalone template project. The categories are:
 
 ### Minimal
 Simple single file projects to demonstrate receiving and printing frame data
@@ -22,7 +22,7 @@ Simple single file projects to demonstrate receiving and printing frame data
 To use the minimal projects, follow the same setup instructions as in the template projects. Then follow the Vicon DataStream SDK Developers Guide to understand how to use the client
 
 ### Template
-Provides a interface class [that wraps the SDK](https://en.wikipedia.org/wiki/Wrapper_function) as well as examples on how to use the wrapper class.
+Provides an interface class [that wraps the SDK](https://en.wikipedia.org/wiki/Wrapper_function) as well as examples on how to use the wrapper class.
 
 Features:
 - Instead of SetStreamMode, my interfaces retrieve and cache frames in a background thread, while providing 3 modes of retrieval
@@ -31,7 +31,7 @@ Features:
 		- Use when the call must not block
 		- e.g. need to receive frames while also sending commands to a robot at a higher frequency
 	- <code>GetFrame_GetUnread</code>
-		- If the cached frame has not yet been read, returns instantly. Otherwise blocks until a new frame arrives
+		- If the cached frame has not yet been read, returns instantly. Otherwise, blocks until a new frame arrives
 		- Use when blocking is acceptable, but duplicate frames are not
 		- e.g. a simple program to receive and write every frame to excel
 	- <code>GetFrame_WaitForNew</code>
@@ -49,7 +49,7 @@ Features:
 **Vicon Control Computer**
 (The computer that is connected to the vicon cameras)
 1. Vicon Tracker is installed on this computer
-2. The Vicon system is setup, calibrated, and running
+2. The Vicon system is set up, calibrated, and running
 
 **Client computer**
 (The computer you wish to work on | You may work directly on the Vicon Control Computer. The steps are the same.)

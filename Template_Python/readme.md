@@ -1,6 +1,6 @@
 Vicon DataStream SDK - Template Projects (Not Official)
 # Python
-These instructions assume that you are running on Windows
+These instructions assume that you are running Python 3.10 on Windows
 
 ## Setup
 1. Install Python with pip
@@ -30,7 +30,10 @@ or in powershell/cmd, run
 -	`python vds_template_#.py`
 
 ## About this template
-This template is currently very umm... minimal....
-Suggested to implement multithreading as in the C++ template and data storage as in the MATLAB template
+Refer to the main readme for general information on why this wrapper class was written.
 
+To use the interface, look at the 3 example files:
+1) Demonstrates the use of all functions provided by the interface
+2) Loop and operate on the captured data
+3) Loop and write the captured data into Excel
 
