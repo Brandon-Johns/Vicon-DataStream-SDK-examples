@@ -1,2 +1,18 @@
 # Matlab
 *.asv
+
+# Python
+.spyproject
+__pycache__
+.idea
+venv
+
+# Visual Studio
+.vs
+.cache
+
+# Excel
+~$*
+
+# Windows
+Thumbs.db

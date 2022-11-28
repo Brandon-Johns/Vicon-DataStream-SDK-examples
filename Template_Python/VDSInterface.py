@@ -4,7 +4,8 @@
 #   Performance is great
 
 # Usage Note:
-#   For some reason, all code that uses this must be wrapped in
+#   Due to use of the "multiprocessing" module,
+#   for some reason, any script that uses this module must be wrapped in
 #       if __name__ == "__main__":
 #   Otherwise there will be some weird error about needing to call
 #       multiprocessing.freeze_support()
@@ -19,6 +20,7 @@ from numpy import nan
 import queue
 import scipy
 import time
+
 
 ############################################################################################
 # Data Structures
@@ -63,7 +65,7 @@ class Point:
         )
 
 
-class Points:
+class Frame:
     def __init__(self, frameNumber=nan, frameTime_seconds=nan):
         self._frameNumber = frameNumber
         self._frameTime_seconds = frameTime_seconds
@@ -95,8 +97,8 @@ class Points:
 
     def GetIfNotOccluded(self):
         out = []
-        for point in self._all:
-            if point.IsOccluded():
+        for point in self.All():
+            if not point.IsOccluded():
                 out.append(point)
         return out
 
@@ -191,7 +193,7 @@ class BackgroundThread:
             self._ViconFrameRate.value = client.GetFrameRate()
 
             # Create object holding frame data
-            points = Points(client.GetFrameNumber(), timestamp)
+            frame = Frame(client.GetFrameNumber(), timestamp)
 
             # Loop over all subjects
             # Decode frame - object pose
@@ -225,10 +227,10 @@ class BackgroundThread:
                 if not self._AllowedByFilters(point):
                     # Skip adding point
                     continue
-                points.AddPoint(point)
+                frame.AddPoint(point)
 
             # Apply AllowedObjects filter if enabled
-            LatestFrame_internal = self._SortByObjectFilter(points)
+            LatestFrame_internal = self._SortByObjectFilter(frame)
 
             with self._lock:
                 # Replace public reference to the previous frame with the new frame
@@ -264,17 +266,17 @@ class BackgroundThread:
 
     # PURPOSE: Sort Points by the ordering specified in the AllowedObjects filter
     # If the filter is not active, return the input
-    def _SortByObjectFilter(self, points):
-        if not self._IsObjectFilterActive.is_set(): return points
+    def _SortByObjectFilter(self, frame):
+        if not self._IsObjectFilterActive.is_set(): return frame
 
-        points_sorted = Points( points.FrameNumber(), points.FrameTime_seconds() )
+        frame_sorted = Frame(frame.FrameNumber(), frame.FrameTime_seconds())
         for allowedObject_name in self._filter_AllowedObjects:
-            point = points.GetByName(allowedObject_name)
+            point = frame.GetByName(allowedObject_name)
 
             # Save point to the return object if allowed by filters
             #	i.e. apply occluded filter
-            if self._AllowedByFilters(point): points_sorted.AddPoint(point)
-        return points_sorted
+            if self._AllowedByFilters(point): frame_sorted.AddPoint(point)
+        return frame_sorted
 
 
 class Interface:
@@ -295,7 +297,7 @@ class Interface:
         self._IsKillRequest = multiprocessing.Event()
         self._IsFrameReady = multiprocessing.Event()
         self._HasLatestFrameBeenRead = multiprocessing.Event()
-        self._LatestFrame = Points()
+        self._LatestFrame = Frame()
         self._FrameQueue = multiprocessing.Queue()
 
         self._backgroundThread = BackgroundThread(
@@ -423,11 +425,11 @@ class Interface:
 
     # PURPOSE:
     #	Get next data frame
-    # OUTPUT: Points object holding the captured data.
+    # OUTPUT: Frame object holding the captured data.
     def GetFrame(self):
         if not self._IsConnected:
             print("WARNING_VDS: (GetFrame) Not Connected")
-            return Points()
+            return Frame()
 
         # Block until thread signals ready
         self._IsFrameReady.wait()
@@ -448,28 +450,16 @@ class Interface:
 # Test
 ##############################################
 if __name__ == "__main__":
-    vds = Interface()
-    vds.Connect()
-    # vds.EnableOccludedFilter()
-    vds.EnableObjectFilter(['bj_c1_h', 'bj_checkerboard_1'])
+    # Basic test
+    # Get and print a frame
+    vdsi = Interface()
+    vdsi.Connect()
 
-    frame = vds.GetFrame()
-    hook = frame.GetByName('bj_c1_h')
-    bh = frame.GetByName('bj_c1_bh')
-    print(frame.FrameNumber())
-    print(hook.Name())
-    print(hook.T())
-    print(bh.Name())
-    print(bh.T())
+    frame = vdsi.GetFrame()
+    print('Frame Rate [Hz]:     ', vdsi.GetFrameRate())
+    print('Frame Number [Count]:', frame.FrameNumber())
 
-    for idx in range(1,50):
-        print( vds.GetFrame_GetUnread().FrameNumber() )
-
-    print('All points:')
-    frame = vds.GetFrame()
     for point in frame.All():
-        print(point.Name(), point.P().T)
+        print(point.Name(), point.P().transpose())
 
-    print(vds.GetFrameRate())
-
-    vds.Disconnect()
+    vdsi.Disconnect()

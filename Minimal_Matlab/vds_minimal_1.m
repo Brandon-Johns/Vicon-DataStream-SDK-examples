@@ -1,8 +1,8 @@
 %{
 Written By: Brandon Johns
 Date Version Created: 2022-11-07
-Date Last Edited: 2022-11-07
-Status: NOT TESTED
+Date Last Edited: 2022-11-28
+Status: functional
 
 %%% PURPOSE %%%
 Template for using Vicon DataStream (VDS)
@@ -64,8 +64,8 @@ for idx = 1 : 3
     for subjectIndex_int32 = 0 : int32(client.GetSubjectCount.SubjectCount) - 1
         subjectIndex = uint32(subjectIndex_int32);
     
-        subjectName = client.GetSubjectName(subjectIndex).subjectName;
-        segmentName = client.GetSubjectRootSegmentName(subjectName).segmentName;
+        subjectName = client.GetSubjectName(subjectIndex).SubjectName;
+        segmentName = client.GetSubjectRootSegmentName(subjectName).SegmentName;
 
         ret_P = client.GetSegmentGlobalTranslation(subjectName, segmentName);
         ret_R = client.GetSegmentGlobalRotationMatrix(subjectName, segmentName);
@@ -75,7 +75,7 @@ for idx = 1 : 3
         R = [R_rowMajor(1:3); R_rowMajor(4:6); R_rowMajor(7:9)];
         isOccluded = ret_P.Occluded || ret_R.Occluded;
 
-        fprintf(subjectName + "\n")
+        fprintf(string(subjectName) + "\n")
         fprintf("Is Occluded: " + isOccluded + "\n")
         fprintf("Translation:\n")
         disp(P)
