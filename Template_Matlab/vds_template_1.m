@@ -64,7 +64,7 @@ T = myObjects.T{:}
 
 % List Markers
 for object = myObjects
-    Markers = table(object.Markers.P{:}, 'variableNames', object.Markers.Name.', 'rowNames',["x","y","z"])
+    Markers = table(object.Markers{:}.P{:}, 'variableNames', object.Markers{:}.Name.', 'rowNames',["x","y","z"])
 end
 
 return
@@ -74,7 +74,7 @@ hold on
 plotTransforms([0,0,0], [1,0,0,0])
 plotTransforms(points.GetByName("Jackal").P{1}.'/1000, points.GetByName("Jackal").quat{1})
 xlabel("x (m)")
-xlabel("y (m)")
-xlabel("z (m)")
+ylabel("y (m)")
+zlabel("z (m)")
 grid on
 hold off
