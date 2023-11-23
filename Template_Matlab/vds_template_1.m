@@ -54,27 +54,29 @@ P = myObjects.P
 Ph = myObjects.Ph
 
 % Rotation (matrix, quaternions, axis angle, euler)
-R = myObjects.R{:}
+R = myObjects.R
 quat = myObjects.quat
 axang = myObjects.axang
 euler = myObjects.euler
 
 % Transformation matrix [position in mm]
-T = myObjects.T{:}
+T = myObjects.T
 
 % List Markers
 for object = myObjects
     Markers = table(object.Markers{:}.P{:}, 'variableNames', object.Markers{:}.Name.', 'rowNames',["x","y","z"])
 end
 
-return
-
-figure
-hold on
-plotTransforms([0,0,0], [1,0,0,0])
-plotTransforms(points.GetByName("Jackal").P{1}.'/1000, points.GetByName("Jackal").quat{1})
-xlabel("x (m)")
-ylabel("y (m)")
-zlabel("z (m)")
-grid on
-hold off
+% Plot coordinate frames
+for object = myObjects
+    figure
+    hold on
+    plotTransforms([0,0,0], [1,0,0,0], "FrameSize",0.2)
+    plotTransforms(object.P{1}.'/1000, object.quat{1}, "FrameSize",1)
+    title("Pose of "+object.Name)
+    xlabel("x (m)")
+    ylabel("y (m)")
+    zlabel("z (m)")
+    grid on
+    hold off
+end
