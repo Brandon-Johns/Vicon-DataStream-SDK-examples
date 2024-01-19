@@ -65,3 +65,6 @@ This documentation is written in markdown. Please view it on GitHub or with a ma
 
 ## License
 This work is distributed under the [BSD-3-Clause License](./LICENSE.txt)
+
+## Source Code
+This project is hosted at https://github.com/Brandon-Johns/Vicon-DataStream-SDK-examples
