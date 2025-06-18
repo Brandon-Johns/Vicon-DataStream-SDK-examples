@@ -22,6 +22,11 @@ These instructions assume that you are running Python 3.10 on Windows
 2. If the computer you are working on is not the Vicon Control Computer, then
 	- In the each `vds_template_#.m` file, change the line `hostName = 'localhost:801'` so that `hostName` is equal to the IP address of the Vicon Control Computer (specified as a string)
 
+3. Install other python packages
+    - `python -m pip install numpy`
+    - `python -m pip install scipy`
+    - `python -m pip install openpyxl`
+
 ## Run
 In a Python IDE, run any of the files
 - `vds_template_#.py`

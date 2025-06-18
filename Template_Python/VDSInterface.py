@@ -66,7 +66,12 @@ class Point:
     def Ph(self): return numpy.append(self._P, [[1]], axis=0)
 
     def R(self): return self._R
-    def quat_xyzw(self): return scipy.spatial.transform.Rotation.from_matrix(self._R).as_quat()
+
+    def quat_xyzw(self):
+        if numpy.any(numpy.isnan(self._R)):
+            return numpy.array([nan, nan, nan, nan])
+        return scipy.spatial.transform.Rotation.from_matrix(self._R).as_quat()
+
     def quat_wxyz(self): return self.quat_xyzw().take([3,0,1,2])
 
     def T(self): return numpy.append( numpy.append(self._R, [[0, 0, 0]], axis=0), self.Ph(), axis=1)
@@ -506,6 +511,7 @@ if __name__ == "__main__":
     # Get and print a frame
     vdsi = Interface()
     vdsi.Connect()
+    time.sleep(0.01)
 
     frame = vdsi.GetFrame()
     print('Frame Rate [Hz]:     ', vdsi.GetFrameRate())
