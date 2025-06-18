@@ -55,7 +55,7 @@ if __name__ == "__main__":
     workbook.create_sheet('Ped_P')
     workbook.create_sheet('Ped_R')
     # Header row
-    headerFrameInfo = ['Number','Age']
+    headerFrameInfo = ['Number','Time']
     headerP = ['x', 'y', 'z']
     headerR = ['qw', 'qx', 'qy', 'qz']
     writeRow(workbook['FrameInfo'], 1, headerFrameInfo)
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
         # If the object is occluded, the row will be blank
         print('Frame:', frame.FrameNumber())
-        writeRow(workbook['FrameInfo'], excelRow, [frame.FrameNumber(), frame.FrameAge_seconds()])
+        writeRow(workbook['FrameInfo'], excelRow, [frame.FrameNumber(), frame.FrameTime_seconds()-timeStart])
         writeRow(workbook['Jac_P'], excelRow, Jackal.P())
         writeRow(workbook['Jac_R'], excelRow, Jackal.quat_wxyz())
         writeRow(workbook['Ped_P'], excelRow, Pedestrian.P())

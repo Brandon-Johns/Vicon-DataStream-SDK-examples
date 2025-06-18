@@ -295,6 +295,10 @@ class BackgroundThread:
                     self._FrameQueue.get()
                 self._FrameQueue.put( LatestFrame_internal )
 
+                # Wait for the put operation to complete
+                # Otherwise the next get_nowait() can fail with "queue.Empty", which is passed, causing GetFrame_GetUnread() to return old frames
+                while self._FrameQueue.empty(): pass
+
                 # Unblock GetFrame() if no settings have been changed
                 # Otherwise get the next frame, as the current frame is corrupted
                 if not self._IsSettingChanged.is_set():
@@ -477,7 +481,8 @@ class Interface:
     #		If the latest frame has not yet been read, return the cached frame
     #		Otherwise, block until the next unread frame arrives
     def GetFrame_GetUnread(self):
-        if self._HasLatestFrameBeenRead.is_set(): self._IsFrameReady.clear()
+        with self._lock:
+            if self._HasLatestFrameBeenRead.is_set(): self._IsFrameReady.clear()
         return self.GetFrame()
 
     # PURPOSE:
@@ -495,11 +500,11 @@ class Interface:
         with self._lock:
             try:
                 self._LatestFrame = self._FrameQueue.get_nowait()
+                self._HasLatestFrameBeenRead.set()
             except queue.Empty:
                 pass
 
         # Return frame from cache
-        self._HasLatestFrameBeenRead.set()
         return copy.deepcopy(self._LatestFrame)
 
 
